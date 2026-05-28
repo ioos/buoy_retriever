@@ -35,7 +35,7 @@ def defs(dataset):
 
 def test_can_build_defs(defs):
     assert defs is not None
-    assert len(defs.assets) == 2
+    assert len(defs.assets) == 3
 
 
 @pytest.mark.vcr(TEST_DATA_DIR / "cassettes/test_hohonu_pipeline/test_daily_asset.yaml")
@@ -46,7 +46,7 @@ def test_daily_asset(defs, dataset):
     assert daily_df is not None, "There should be a daily_df asset"
     assert spec.group_name == "boothbay_dmr", "The group name should be boothbay_dmr"
     assert spec.description == "Download daily dataframe from Hohonu for boothbay_dmr"
-    assert spec.metadata[io.DESIRED_PATH] == dataset.daily_partition_path()
+    assert spec.metadata[io.DESIRED_PATH] == dataset.daily_csv_partition_path()
 
     context = dg.build_asset_context(partition_key="2025-09-30")
 
@@ -63,13 +63,8 @@ def test_daily_asset(defs, dataset):
     pd.testing.assert_frame_equal(df, snapshot)
 
 
-def test_monthly_asset(defs, dataset):
+def _get_monthly_ds(defs):
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
-    spec = monthly_ds.get_asset_spec()
-    assert monthly_ds is not None
-    assert spec.group_name == "boothbay_dmr"
-    assert spec.description == "Monthly NetCDFs for boothbay_dmr"
-    assert spec.metadata[io.DESIRED_PATH] == dataset.monthly_partition_path()
     context = dg.build_asset_context(partition_key="2025-09-01")
 
     daily_df = {
@@ -83,9 +78,37 @@ def test_monthly_asset(defs, dataset):
 
     ds = monthly_ds(context, daily_df=daily_df)
 
+    return monthly_ds, context, ds
+
+
+def test_monthly_nc_asset(defs, dataset):
+    monthly_ds, context, ds = _get_monthly_ds(defs)
+    assert monthly_ds is not None
+
+    spec = monthly_ds.get_asset_spec()
+    assert spec.group_name == "boothbay_dmr"
+    assert spec.description == "Monthly NetCDFs for boothbay_dmr"
+    assert spec.metadata[io.DESIRED_PATH] == dataset.monthly_nc_partition_path()
+
     assert isinstance(ds, xr.Dataset)
     assert "navd88_meters" in ds.data_vars, "The dataset should have a metric variable"
     assert (
         ds["navd88_meters"].attrs["standard_name"]
         == "sea_surface_height_above_geopotential_datum"
     ), "Attributes should be applied"
+
+
+def test_monthly_parquet_asset(defs, dataset):
+    monthly_parquet = test_utils.get_asset_by_name(defs, "monthly_parquet")
+    monthly_ds, context, ds = _get_monthly_ds(defs)
+
+    spec = monthly_parquet.get_asset_spec()
+    assert monthly_parquet is not None
+    assert spec.group_name == "boothbay_dmr"
+    assert spec.description == "Monthly parquet files for boothbay_dmr"
+    assert spec.metadata[io.DESIRED_PATH] == dataset.monthly_parquet_partition_path()
+
+    df = monthly_parquet(context, monthly_ds=ds)
+    assert isinstance(df, pd.DataFrame)
+    assert isinstance(ds, xr.Dataset)
+    assert "navd88_meters" in df.columns
