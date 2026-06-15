@@ -143,7 +143,25 @@ services:
     depends_on:
       backend:
         condition: service_started
-
+  aveva:
+    build:
+      context: .
+      dockerfile: ./pipeline/aveva/Dockerfile
+      args:
+        IMAGE_TAG: aveva_dev
+    env_file:
+    - ./docker-data/common.env
+    - ./docker-data/dagster.env
+    - ./docker-data/secret.env
+    volumes:
+      - ./pipeline/aveva:/home/ioos:cached
+      - /home/ioos/.pixi
+      - ./common/:/home/ioos/common/:cached
+      - ./docker-data/shared-fs:/mnt/efs/
+      - ./docker-data/datasets_config/aveva/metadata/:/mnt/datasets_config/metadata
+    depends_on:
+      backend:
+        condition: service_started
   hohonu:
     build:
       context: .

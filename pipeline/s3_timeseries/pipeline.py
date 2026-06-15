@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
 from common.config import attributes, mappings, s3_source
+from common.pipeline.shared_pipeline import monthly_pipeline_ds
 from common.readers.pandas_csv import PandasCSVReader
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
 from common.sentry import SentryConfig
@@ -91,6 +92,7 @@ class S3TimeseriesDataset(config.DatasetBase):
 
     def monthly_partition_path(self):
         """Path to monthly partitions."""
+
         return (
             self.safe_slug
             # + "/monthly/{partition_key_dt:%Y}/"
@@ -233,42 +235,7 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
                 df = clean_up_dtypes_and_nas(df, na_values="NAN", logger=context.log)
             daily_dfs.append(df)
 
-        df = pd.concat(daily_dfs, ignore_index=True)
-        if dataset.config.dataset_type == "profile":
-            indx_var = ["time", "depth"]
-        else:
-            indx_var = "time"
-
-        df = df.sort_values(indx_var)
-        df = df.drop_duplicates(subset=indx_var)
-        df["time"] = pd.to_datetime(df["time"])
-        df = df.set_index(indx_var)
-
-        ds = df.to_xarray()
-
-        ds["station"] = dataset.config.station
-        if dataset.config.latitude is not None:
-            ds["latitude"] = dataset.config.latitude
-        if dataset.config.longitude is not None:
-            ds["longitude"] = dataset.config.longitude
-
-        ds = ds.set_coords(["station", "latitude", "longitude"])
-
-        # apply attributes
-
-        ds["time"].encoding.update(
-            {
-                "units": "seconds since 1970-01-01T00:00:00Z",
-                "calendar": "gregorian",
-                "standard_name": "time",
-            },
-        )
-
-        dataset.config.attributes.add_attributes_from_yaml()
-
-        dataset.config.attributes.apply_to_dataset(ds)
-
-        return ds
+        return monthly_pipeline_ds(context, daily_dfs, dataset)
 
     daily_job = dg.define_asset_job(
         f"update_{dataset.safe_slug}_daily",
