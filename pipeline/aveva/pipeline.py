@@ -18,7 +18,7 @@ sentry = SentryConfig(pipeline_name="aveva")
 
 
 class AvevaTimeseriesConfig(BaseTimeseriesConfig):
-    """Configuration for S3 Timeseries Dataset."""
+    """Configuration for Aveva Timeseries Dataset."""
 
     namespace: Annotated[str, Field(description="Aveva namespace for the dataset")]
 
@@ -126,7 +126,7 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:  # noqa
         context: dg.AssetExecutionContext,
         aveva_resource: AvevaResource,
     ) -> pd.DataFrame:
-        """Download daily dataframe from S3."""
+        """Download daily dataframe from Aveva API."""
         partition_date_string = context.asset_partition_key_for_output()
         partition_date = date.fromisoformat(partition_date_string)
         context.log.info(f"Partition date {partition_date_string}")
