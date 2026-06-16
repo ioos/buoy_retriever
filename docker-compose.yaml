@@ -58,21 +58,41 @@ services:
       # - queue
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: dev
-    command: npm run dev
-    stdin_open: true
-    volumes:
-      - ./frontend:/app:cached
-      - /app/node_modules
-      - /app/.next/
-      - /app/build/
+    image: "strm/helloworld-http:latest"
     ports:
-      - "${BUOY_RETRIEVER_FRONTEND_PORT:-3000}:3000"
-    environment:
-      NEXT_PUBLIC_BACKEND_URL: http://backend:8080
+      - 5555:80
+
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     target: dev
+  #   command: npm run dev
+  #   stdin_open: true
+  #   volumes:
+  #     - ./frontend:/app:cached
+  #     - ./docker-data/app/node_modules:/app/node_modules
+  #     - ./docker-data/app/.next/:/app/.next/
+  #     - ./docker-data/app/build/:/app/build/
+  #   ports:
+  #     - "${BUOY_RETRIEVER_FRONTEND_PORT:-3000}:3000"
+  #   environment:
+  #     NEXT_PUBLIC_BACKEND_URL: http://backend:8080
+
+  proxy:
+    image: "buoy_retriever_proxy:latest"
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
+    # volumes:
+    #   - ...
+    ports:
+      - "9090:9090"
+    depends_on:
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_started
 
   dagster_postgres:
     image: timescale/timescaledb-ha:pg17-ts2.21@sha256:a2f4731fd341e93a96fdc49f21137db0ec27bd3d72a5dab241fec2b344f2f54c
