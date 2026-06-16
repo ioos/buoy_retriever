@@ -22,11 +22,11 @@ class AvevaTimeseriesConfig(BaseTimeseriesConfig):
 
     namespace: Annotated[str, Field(description="Aveva namespace for the dataset")]
 
-    tenant_id: Annotated[str, Field(description="Aveva tentan ID for the dataset")]
+    tenant_id: Annotated[str, Field(description="Aveva tentant ID for the dataset")]
 
 
 class AvevaTimeseriesDataset(config.DatasetBase):
-    """S3 Timeseries Dataset."""
+    """Aveva Timeseries Dataset."""
 
     config: Annotated[
         AvevaTimeseriesConfig,
@@ -147,6 +147,7 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:  # noqa
         ).json()
 
         combined_df = pd.DataFrame(columns=["time"])
+        qaqc_var = "IsQuestionable"
         for stream in streams:
             context.log.info(f"Stream: {stream}")
 
@@ -161,17 +162,18 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:  # noqa
                 df = pd.DataFrame.from_dict(stream_data.json(), orient="columns")
                 if df.empty:
                     continue
-                print(f"DF COLUMNS {df.columns.tolist()}")
-                df.loc[df["IsQuestionable"].isna(), "IsQuestionable"] = False
-                df["IsQuestionable"] = df["IsQuestionable"].astype(bool)
-
                 df["Timestamp"] = pd.to_datetime(df["Timestamp"]).dt.floor("s")
+                columns = {
+                    "Value": stream["Name"],
+                    "Timestamp": "time",
+                }
+                if qaqc_var in df:
+                    df.loc[df[qaqc_var].isna(), qaqc_var] = False
+                    df[qaqc_var] = df[qaqc_var].astype(bool)
+                    columns[qaqc_var] = f"{stream['Name']}_{qaqc_var}"
+
                 df = df.rename(
-                    columns={
-                        "Value": stream["Name"],
-                        "Timestamp": "time",
-                        "IsQuestionable": f"{stream['Name']}_IsQuestionable",
-                    },
+                    columns=columns,
                 )
                 combined_df = combined_df.merge(df, on="time", how="outer")
 
@@ -189,8 +191,6 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:  # noqa
         partitions_def=monthly_partitions,
         metadata={
             io.DESIRED_PATH: dataset.monthly_partition_path(),
-            # io.S3_DESIRED_PATH: config.s3_path(),
-            # io.S3_PUBLIC: True,
         },
         automation_condition=assets.auto_condition_eager_allow_missing(),
         **io.NETCDF_ASSET_KWARGS,

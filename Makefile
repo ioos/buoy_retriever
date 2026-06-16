@@ -64,8 +64,8 @@ test-hohonu:
 	docker run -v ./docker-data/test-data:/mnt/test-data:ro buoy_retriever-hohonu pixi run pytest --cov=.
 
 test-aveva:
-        docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .
-        docker run  -e METADATA_PATH=/mnt/datasets_config/metadata --env-file ./docker-data/secret.env -v ./docker-data/datasets_config/aveva_pipeline/:/mnt/datasets_config  buoy_retriever-aveva pixi run pytest --cov=.
+	docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .
+	docker run  -v ./docker-data/test-data:/mnt/test-data:ro  buoy_retriever-aveva pixi run pytest --cov=.
 
 test-s3-timeseries:
 	docker build -f pipeline/s3_timeseries/Dockerfile -t buoy_retriever-s3_timeseries .

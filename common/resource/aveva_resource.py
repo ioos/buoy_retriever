@@ -1,4 +1,4 @@
-"""Reusable S3FS resource"""
+"""Resource for Aveva API"""
 
 import dagster as dg
 import requests
@@ -21,8 +21,7 @@ class AvevaResource(dg.ConfigurableResource):
     _token: str = PrivateAttr()
 
     def setup_for_execution(self, context: dg.InitResourceContext) -> None:
-        print("SETUP EXECUTION")
-
+        """Retrieves an access token from Aveva"""
         wellknown_information = requests.get(
             f"{self.ocs_resource}/identity/.well-known/openid-configuration",
             timeout=self.aveva_timeout,
@@ -41,7 +40,6 @@ class AvevaResource(dg.ConfigurableResource):
         )
 
         self._token = token_information.json()["access_token"]
-        print(f"Set Token to {self._token}")
 
     @property
     def aveva_token(self) -> str:

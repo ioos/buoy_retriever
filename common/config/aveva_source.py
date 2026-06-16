@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class AvevaSourceConfig(BaseModel):
-    """Configuration for data coming from an S3 Bucket"""
+    """Configuration for data coming from the Aveva API"""
 
     resource: Annotated[
         str,
@@ -18,7 +18,7 @@ class AvevaSourceConfig(BaseModel):
 
 
 class AvevaSourceMixin:
-    """Mixin to add S3 source configuration to a dataset or reader"""
+    """Mixin to add Aveva configuration to a dataset or reader"""
 
     aveva_source: Annotated[
         AvevaSourceConfig,

@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 
@@ -11,15 +10,15 @@ from common import io, test_utils
 from common.resource.aveva_resource import AvevaCredentials, AvevaResource
 from pipeline import AvevaTimeseriesDataset, defs_for_dataset
 
+TEST_DATA_DIR = Path("/mnt/test-data/aveva_timeseries/")
+
 
 @pytest.fixture
-def dataset_config(asset_name):
-    with Path.open(f"/mnt/datasets_config/{asset_name}.json") as config_f:
-        config = json.load(config_f)
-    return AvevaTimeseriesDataset(
-        slug=f"{asset_name}-test",
-        config=config,
-    )
+def dataset_config(asset_name, created_dt_str):
+    config_path = TEST_DATA_DIR / f"fixtures/{asset_name}.json"
+    print(config_path)
+
+    return AvevaTimeseriesDataset.from_fixture(config_path, created_dt_str)
 
 
 @pytest.fixture
@@ -45,9 +44,9 @@ def aveva_resource(aveva_credentials):
 
 
 @pytest.mark.parametrize(
-    "asset_name",
+    "asset_name,created_dt_str",
     [
-        pytest.param("aveva_test"),
+        pytest.param("aveva", "2026-05-21T17:08:19.590Z"),
     ],
 )
 def test_can_build_defs(defs):
@@ -56,15 +55,17 @@ def test_can_build_defs(defs):
 
 
 @pytest.mark.parametrize(
-    "asset_name,snapshot_path,partition_key",
+    "asset_name,created_dt_str,snapshot_path,partition_key",
     [
         pytest.param(
-            "aveva_test",
-            "tests/test_data/test_aveva_20260302.csv",
+            "aveva",
+            "2026-05-21T17:08:19.590Z",
+            TEST_DATA_DIR / "test_aveva/test_aveva_20260302.csv",
             "2026-03-02",
         ),
     ],
 )
+@pytest.mark.aveva
 def test_daily_asset(
     defs,
     dataset_config,
@@ -100,14 +101,15 @@ def test_daily_asset(
 
 
 @pytest.mark.parametrize(
-    "asset_name,daily_snapshot_dict,monthly_snapshot_path,monthly_partition_key",
+    "asset_name,created_dt_str,daily_snapshot_dict,monthly_snapshot_path,monthly_partition_key",
     [
         pytest.param(
-            "aveva_test",
+            "aveva",
+            "2026-05-21T17:08:19.590Z",
             {
-                "2026-03-02": "tests/test_data/test_aveva_20260302.csv",
+                "2026-03-02": TEST_DATA_DIR / "test_aveva/test_aveva_20260302.csv",
             },
-            "tests/test_data/empire_met/test_empire_met_202511.nc",
+            TEST_DATA_DIR / "test_aveva/test_aveva_202603.nc",
             "2026-03-01",
         ),
     ],
@@ -123,7 +125,7 @@ def test_monthly_asset(
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
     spec = monthly_ds.get_asset_spec()
     assert monthly_ds is not None
-    assert spec.group_name == f"{asset_name}_test"
+    assert spec.group_name == asset_name, f"The group name should be {asset_name}"
     assert (
         spec.description
         == "Combine daily dataframes into a monthly NetCDF and apply transformations."

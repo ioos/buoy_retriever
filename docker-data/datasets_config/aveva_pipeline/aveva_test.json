@@ -1,9 +1,0 @@
-{
-  "station": "AVEVA_TEST",
-  "latitude": 0.0,
-  "longitude": 0.0,
-  "start_date": "2026-03-02",
-  "dataset_type": "timeseries",
-  "namespace": "0cc6bb5c-af15-414e-b7bc-f53dad416f79",
-  "tenant_id": "1b26459f-88eb-4d0b-ba89-09d9c58148a2"
-}
