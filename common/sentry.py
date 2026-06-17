@@ -3,12 +3,18 @@ Setup sentry and use some sane defaults
 """
 
 import functools
-import os
 from typing import Annotated
 
 import dagster as dg
 import sentry_sdk
 from pydantic import BaseModel, Field
+
+from .config.env import (
+    IMAGE_TAG,
+    SENTRY_DSN,
+    SENTRY_PROFILE_SAMPLE_RATE,
+    SENTRY_TRACES_SAMPLE_RATE,
+)
 
 
 class SentryConfig(BaseModel):
@@ -113,11 +119,6 @@ def setup_sentry(pipeline_name: str):
 
     # ignore_logger("dagster")
 
-    SENTRY_DSN = os.environ.get("SENTRY_DSN")
-    IMAGE_TAG = os.environ.get("IMAGE_TAG")
-    TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", 1))
-    PROFILE_SAMPLE_RATE = float(os.environ.get("SENTRY_PROFILE_SAMPLE_RATE", 1))
-
     environment = "dev" if "dev" in IMAGE_TAG else "production"
 
     sentry_sdk.init(
@@ -138,10 +139,10 @@ def setup_sentry(pipeline_name: str):
         send_default_pii=True,
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for tracing.
-        traces_sample_rate=TRACES_SAMPLE_RATE,
+        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
         # To collect profiles for all profile sessions,
         # set `profile_session_sample_rate` to 1.0.
-        profile_session_sample_rate=PROFILE_SAMPLE_RATE,
+        profile_session_sample_rate=SENTRY_PROFILE_SAMPLE_RATE,
         # Profiles will be automatically collected while
         # there is an active span.
         profile_lifecycle="trace",

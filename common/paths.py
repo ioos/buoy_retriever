@@ -1,11 +1,12 @@
 """Common paths across services"""
 
-import os
 from pathlib import Path
+
+from .config.env import LOCAL_IO
 
 # Base path of the filesystem, if `LOCAL_IO` environment variable
 # is set, adapt to running directly rather than in Docker/Kubernetes
-if os.environ.get("LOCAL_IO"):
+if LOCAL_IO:
     SHARED_STORAGE = Path(__file__).parent.parent / "docker-data/shared-fs"
 else:
     SHARED_STORAGE = Path("/mnt/efs/")

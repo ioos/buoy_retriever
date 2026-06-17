@@ -1,0 +1,29 @@
+[
+  {
+    "model": "datasets.dataset",
+    "fields": {
+      "slug": "io_hohonu_fernandina_beach_1",
+      "pipeline": ["hohonu"],
+      "state": "Active",
+      "created": "2026-05-29T19:54:36.162Z",
+      "edited": "2026-05-29T19:54:36.163Z"
+    }
+  },
+  {
+    "model": "datasets.datasetconfig",
+    "pk": 8,
+    "fields": {
+      "dataset": ["io_hohonu_fernandina_beach_1"],
+      "config": {
+        "station": "io_hohonu_fernandina_beach_1",
+        "latitude": 30.6713,
+        "hohonu_id": "hohonu-76",
+        "longitude": -81.4658,
+        "start_date": "2026-04-01T00:00:00.000Z"
+      },
+      "created": "2026-05-27T23:49:37.973Z",
+      "edited": "2026-05-29T19:54:36.175Z",
+      "state": "Published"
+    }
+  }
+]

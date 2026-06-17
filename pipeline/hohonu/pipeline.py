@@ -3,7 +3,7 @@ import sentry_sdk
 
 from common import config, io
 from common.backend_api import BackendAPIClient
-from hohonu import HohonuConfig, HohonuDataset, defs_for_dataset
+from hohonu import HohonuConfig, HohonuDataset, defs_for_dataset, pipeline_slug
 
 from hohonu_api import HohonuApi
 
@@ -16,7 +16,7 @@ def build_defs() -> dg.Definitions:
         name="Build Hohonu Pipeline Definitions",
     ):
         pipeline = config.PipelineConfig(
-            slug="hohonu",
+            slug=pipeline_slug,
             name="Hohonu",
             description="Fetch tide data from Hohonu's API",
             dataset_config=HohonuConfig,
