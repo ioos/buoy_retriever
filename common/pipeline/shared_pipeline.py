@@ -17,7 +17,7 @@ class BaseTimeseriesConfig(
     attributes.AttributeConfigMixin,
     mappings.VariableConverterMixIn,
 ):
-    """Configuration for S3 Timeseries Dataset."""
+    """Configuration for Timeseries Dataset."""
 
     start_date: date
 

@@ -24,6 +24,6 @@ class AvevaSourceMixin:
         AvevaSourceConfig,
         Field(
             default_factory=AvevaSourceConfig,
-            description="Configuration for accessing data in S3",
+            description="Configuration for accessing data via Aveva API",
         ),
     ]
