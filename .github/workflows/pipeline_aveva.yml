@@ -1,0 +1,30 @@
+name: Pipeline - Aveva Timeseries
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - common/**
+            - pipeline/aveva/**
+    pull_request:
+        paths:
+            - common/**
+            - pipeline/aveva/**
+    workflow_dispatch:
+
+jobs:
+    shortsha:
+        uses: ./.github/workflows/_shortsha.yml
+
+    build_test_push:
+        needs: [shortsha]
+        uses: ./.github/workflows/_build_image.yml
+        with:
+            working_directory: ./pipeline/aveva
+            image_name: buoy_retriever_aveva
+            image_tag: ${{ needs.shortsha.outputs.shortsha }}
+            # push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+            test_command: "pixi run pytest --cov=. --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy"
+            coverage_flags: aveva
+            upload_tests: true
