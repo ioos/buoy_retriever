@@ -99,7 +99,7 @@ def build_defs() -> dg.Definitions:
         return defs
 
 
-def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:  # noqa: C901
+def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
     """Definitions for a single Aveva Timeseries dataset."""
     common_asset_kwargs = {
         "key_prefix": ["aveva", dataset.safe_slug],
