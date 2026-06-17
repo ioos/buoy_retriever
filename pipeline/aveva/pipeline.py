@@ -130,10 +130,8 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
         partition_date_string = context.asset_partition_key_for_output()
         partition_date = date.fromisoformat(partition_date_string)
         context.log.info(f"Partition date {partition_date_string}")
-        context.log.info(f"date {partition_date}")
         start_window = f"{partition_date:%Y-%m-%d}T00:00:00Z"
         end_window = f"{partition_date:%Y-%m-%d}T23:59:59Z"
-        # Step 4: test token by calling the base tenant endpoint
         msg_headers = {"Authorization": f"Bearer {aveva_resource.aveva_token}"}
 
         base_url = f"{aveva_resource.ocs_resource}/api/v1/Tenants/{dataset.config.tenant_id}/Namespaces/{dataset.config.namespace}"
@@ -146,6 +144,7 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
             timeout=aveva_resource.aveva_timeout,
         ).json()
 
+        context.log.info(f"Found {len(streams)} for source")
         combined_df = pd.DataFrame(columns=["time"])
         qaqc_var = "IsQuestionable"
         for stream in streams:
