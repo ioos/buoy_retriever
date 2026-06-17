@@ -16,6 +16,10 @@ core:
 spotlight:
 	docker compose run --rm spotlight
 
+# Start erddap services: erddapper, erddap, erddapper-metadata
+erddap:
+	docker compose up --build erddapper erddap erddapper-metadata
+
 # Stop and remove all containers
 down:
 	docker compose -f docker-compose.yaml down --remove-orphans

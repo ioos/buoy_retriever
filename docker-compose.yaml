@@ -14,7 +14,7 @@ services:
     volumes:
       - ./docker-data/postgres:/var/lib/postgresql/data:cached
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 2s
       timeout: 5s
       retries: 5
@@ -37,7 +37,8 @@ services:
     image: buoy_retriever_backend
     command: "python manage.py runserver 0:8080"
     volumes:
-      - ./backend:/home/uwsgi/app:cached
+      # comment the following line if permissions errors are encountered when running make migrations
+      #- ./backend:/home/uwsgi/app:cached
       - ./docker-data/media:/media:cached
       - ./docker-data/static:/static:cached
       - ./docker-data/test-data:/mnt/test-data:cached
@@ -96,7 +97,7 @@ services:
     ports:
       - "${BUOY_RETRIEVER_DAGSTER_DB_PORT:-5433}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 2s
       timeout: 5s
       retries: 5
@@ -190,3 +191,55 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  erddapper:
+    build: https://github.com/axiom-data-science/erddapper.git#main
+    ports:
+      - "${BUOY_RETRIEVER_ERDDAPPER_PORT:-8082}:8080"
+    volumes:
+      - ./docker-data/shared-fs:/data
+      - ./docker-data/erddap-datasets:/opt/erddapper/datasets
+    environment:
+      ERDDAPPER_ERDDAP_BASE_URL: http://erddap:8080
+      ERDDAPPER_ERDDAP_FLAG_KEY_KEY: "${BUOY_RETRIEVER_ERDDAP_FLAG_KEY_KEY:?}"
+      ERDDAPPER_ENABLED_SOURCES: inline:NcoJsonInlineSource
+      ERDDAPPER_ALLOWED_DATA_PATHS: /data
+      ERDDAPPER_ERDDAP_FLAG_KEY_URL: https://localhost:8443
+
+  # this is a fakey placeholder service until asset-manager is integrated,
+  # at which point erddapper will get its metadata from the ACDD API endpoint
+  erddapper-metadata:
+    image: nginx:1.30.5
+    ports:
+      - "${BUOY_RETRIEVER_ERDDAPPER_METADATA_PORT:-8083}:80"
+    configs:
+      - source: erddapper_metadata_nginx_server
+        target: /etc/nginx/conf.d/00default.conf
+    volumes:
+      - ./docker-data/test-data/hohonu/ncojson/metadata:/ncojson:ro
+
+  erddap:
+    # replace with stable version after
+    # https://github.com/ERDDAP/erddap/pull/582 is released
+    image: erddap/erddap:alpha-latest
+    ports:
+      - "${BUOY_RETRIEVER_ERDDAP_PORT:-8081}:8080"
+    volumes:
+      - ./docker-data/shared-fs:/data
+      - ./docker-data/erddap-data:/erddapData
+      - ./docker-data/erddap-datasets:/mnt/datasets:ro
+    environment:
+      ERDDAP_flagKeyKey: "${BUOY_RETRIEVER_ERDDAP_FLAG_KEY_KEY:?}"
+      ERDDAP_allowedHosts: "${BUOY_RETRIEVER_ERDDAP_allowedHosts:-}"
+      ERDDAP_SYMLINK_DATASETS_XML: "/mnt/datasets/datasets.xml"
+    depends_on:
+      - erddapper
+
+configs:
+  erddapper_metadata_nginx_server:
+    content: |
+      server {
+        listen 80 default_server;
+        root /ncojson;
+        autoindex on;
+      }

@@ -230,3 +230,7 @@ pipeline/*/storage/
 
 # vim
 *.swp
+
+# ERDDAP/erddapper
+docker-data/erddap-data
+docker-data/erddap-datasets
