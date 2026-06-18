@@ -1,7 +1,9 @@
 """Resource for Aveva API"""
 
 import dagster as dg
-import requests
+
+# import requests
+import httpx
 from pydantic import PrivateAttr
 
 
@@ -18,20 +20,20 @@ class AvevaResource(dg.ConfigurableResource):
     credentials: dg.ResourceDependency[AvevaCredentials]
     ocs_resource: str
     aveva_timeout: int = 30
-    _token: str = PrivateAttr()
+
+    _client: httpx.Client = PrivateAttr()
 
     def setup_for_execution(self, context: dg.InitResourceContext) -> None:
         """Retrieves an access token from Aveva"""
-        wellknown_information = requests.get(
+        client = httpx.Client(timeout=self.aveva_timeout)
+        wellknown_information = client.get(
             f"{self.ocs_resource}/identity/.well-known/openid-configuration",
-            timeout=self.aveva_timeout,
         )
         token_url = wellknown_information.json()["token_endpoint"]
 
-        # Step 3: use the client ID and Secret to get the needed bearer token
-        token_information = requests.post(
+        #  use the client ID and Secret to get the needed bearer token
+        token_information = client.post(
             token_url,
-            timeout=self.aveva_timeout,
             data={
                 "client_id": self.credentials.client_id,
                 "client_secret": self.credentials.client_secret,
@@ -39,9 +41,15 @@ class AvevaResource(dg.ConfigurableResource):
             },
         )
 
-        self._token = token_information.json()["access_token"]
+        token = token_information.json()["access_token"]
+        client.headers.update({"Authorization": f"Bearer {token}"})
+        self._client = client
+
+    def teardown_after_execution(self, context: dg.InitResourceContext) -> None:
+        """Close and cleanup the session"""
+        self._client.close()
 
     @property
-    def aveva_token(self) -> str:
-        """Access the aveva client"""
-        return self._token
+    def client(self) -> httpx.Client:
+        """Configured requests.Session with headers and timeout"""
+        return self._client

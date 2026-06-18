@@ -65,7 +65,7 @@ test-hohonu:
 
 test-aveva:
 	docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .
-	docker run  -v ./docker-data/test-data:/mnt/test-data:ro  buoy_retriever-aveva pixi run pytest --cov=.
+	docker run  -v ./docker-data/test-data:/mnt/test-data:ro  --env-file ./docker-data/secret.env  buoy_retriever-aveva pixi run pytest --aveva --cov=.
 
 test-s3-timeseries:
 	docker build -f pipeline/s3_timeseries/Dockerfile -t buoy_retriever-s3_timeseries .

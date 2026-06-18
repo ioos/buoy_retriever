@@ -1,4 +1,4 @@
-#syntax=docker/dockerfile:1.7
+pipeline/s3_timeseries/Dockerfile#syntax=docker/dockerfile:1.7
 FROM ghcr.io/prefix-dev/pixi:0.43.3-jammy@sha256:a47be96e31621c1d2fbbfd41546acb96d8877622060782dd3405aacdbe495132
 
 ENV PYTHON_USER ioos
@@ -28,6 +28,7 @@ COPY ${SOURCE}/*.py \
     ${SOURCE}/*.yaml \
     ${SOURCE}/.coveragerc \
     ${HOME}/
+
 
 COPY ${SOURCE}/tests/ ${HOME}/tests/
 

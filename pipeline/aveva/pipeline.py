@@ -3,15 +3,14 @@ from typing import Annotated
 
 import dagster as dg
 import pandas as pd
-import requests
 import sentry_sdk
 import xarray as xr
+from config.aveva_resource import AvevaCredentials, AvevaResource
 from pydantic import Field
 
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
 from common.pipeline.shared_pipeline import BaseTimeseriesConfig, monthly_pipeline_ds
-from common.resource.aveva_resource import AvevaCredentials, AvevaResource
 from common.sentry import SentryConfig
 
 sentry = SentryConfig(pipeline_name="aveva")
@@ -132,16 +131,13 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
         context.log.info(f"Partition date {partition_date_string}")
         start_window = f"{partition_date:%Y-%m-%d}T00:00:00Z"
         end_window = f"{partition_date:%Y-%m-%d}T23:59:59Z"
-        msg_headers = {"Authorization": f"Bearer {aveva_resource.aveva_token}"}
+
+        client = aveva_resource.client
 
         base_url = f"{aveva_resource.ocs_resource}/api/v1/Tenants/{dataset.config.tenant_id}/Namespaces/{dataset.config.namespace}"
 
-        # start_date =
-
-        streams = requests.get(
+        streams = client.get(
             f"{base_url}/Streams",
-            headers=msg_headers,
-            timeout=aveva_resource.aveva_timeout,
         ).json()
 
         context.log.info(f"Found {len(streams)} for source")
@@ -150,26 +146,26 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
         for stream in streams:
             context.log.info(f"Stream: {stream}")
 
-            stream_data = requests.get(
+            stream_data = client.get(
                 f"{base_url}/Streams/{stream['Id']}/Data",
-                headers=msg_headers,
-                timeout=aveva_resource.aveva_timeout,
                 params={"startIndex": start_window, "endIndex": end_window},
             )
 
             if stream_data.status_code == 200:
+                context.log.info(stream_data.json())
                 df = pd.DataFrame.from_dict(stream_data.json(), orient="columns")
+                var_name = stream["Name"].replace(".", "_").replace(" ", "_")
                 if df.empty:
                     continue
                 df["Timestamp"] = pd.to_datetime(df["Timestamp"]).dt.floor("s")
                 columns = {
-                    "Value": stream["Name"],
+                    "Value": var_name,
                     "Timestamp": "time",
                 }
                 if qaqc_var in df:
                     df.loc[df[qaqc_var].isna(), qaqc_var] = False
                     df[qaqc_var] = df[qaqc_var].astype(bool)
-                    columns[qaqc_var] = f"{stream['Name']}_{qaqc_var}"
+                    columns[qaqc_var] = f"{var_name}_{qaqc_var}"
 
                 df = df.rename(
                     columns=columns,
@@ -202,11 +198,7 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        daily_dfs = []
-
-        for df in daily_df.values():
-            daily_dfs.append(df)
-        return monthly_pipeline_ds(context, daily_dfs, dataset)
+        return monthly_pipeline_ds(context, daily_df, dataset, None)
 
     dataset_assets = [daily_df, monthly_ds]
 

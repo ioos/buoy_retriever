@@ -1,4 +1,3 @@
-import logging
 from datetime import date, datetime
 from textwrap import dedent
 from typing import Annotated
@@ -14,8 +13,8 @@ from pydantic import BaseModel, Field
 
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
-from common.config import attributes, mappings, s3_source
-from common.pipeline.shared_pipeline import monthly_pipeline_ds
+from common.config import s3_source
+from common.pipeline.shared_pipeline import BaseTimeseriesConfig, monthly_pipeline_ds
 from common.readers.pandas_csv import PandasCSVReader
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
 from common.sentry import SentryConfig
@@ -42,37 +41,16 @@ class DayGlob(BaseModel):
 
 
 class S3TimeseriesConfig(
-    config.DatasetConfigBase,
-    # config.AttributeConfigMixin,
-    mappings.VariableMappingMixin,
+    BaseTimeseriesConfig,
     s3_source.S3SourceMixin,
-    attributes.AttributeConfigMixin,
-    mappings.VariableConverterMixIn,
 ):
     """Configuration for S3 Timeseries Dataset."""
 
-    start_date: date
-
     reader: PandasCSVReader
-
-    dataset_type: Annotated[
-        str,
-        Field(description="Dateset type (timeseries or profile)"),
-    ] = "timeseries"
 
     source_time_var: str = "datetime"
 
     file_pattern: Annotated[DayGlob, Field(description="Source file name pattern")]
-
-    latitude: Annotated[
-        float | None,
-        Field(description="Fixed latitude of the station"),
-    ] = None
-    longitude: Annotated[
-        float | None,
-        Field(description="Fixed longitude of the station"),
-    ] = None
-    station: Annotated[str, Field(description="Station name/timeseries_id")]
 
 
 class S3TimeseriesDataset(config.DatasetBase):
@@ -202,40 +180,7 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        daily_dfs = []
-
-        for df_date, df in daily_df.items():
-            for var_map in dataset.config.variable_mappings:
-                if var_map.source in df.columns:
-                    df = df.rename(columns={var_map.source: var_map.output})
-                else:
-                    context.log.warning(
-                        f"Source variable '{var_map.source}' not found in data for {df_date}",
-                    )
-
-            if len(set(df.columns)) != len(df.columns):
-                context.log.warning(
-                    f"Column name collision after renaming for data on {df_date}, trying to squish duplicates",
-                )
-                df = df.groupby(df.columns, axis=1).first()
-
-            # Avoid attempting to convert the time column to numeric inside
-            # clean_up_dtypes_and_nas, which causes unnecessary exceptions.
-            if "time" in df.columns:
-                time_col = df["time"]
-                df_wo_time = df.drop(columns=["time"])
-                df_wo_time = clean_up_dtypes_and_nas(
-                    df_wo_time,
-                    na_values="NAN",
-                    logger=context.log,
-                )
-                df_wo_time["time"] = time_col
-                df = df_wo_time
-            else:
-                df = clean_up_dtypes_and_nas(df, na_values="NAN", logger=context.log)
-            daily_dfs.append(df)
-
-        return monthly_pipeline_ds(context, daily_dfs, dataset)
+        return monthly_pipeline_ds(context, daily_df, dataset, "NAN")
 
     daily_job = dg.define_asset_job(
         f"update_{dataset.safe_slug}_daily",
@@ -378,25 +323,3 @@ def build_defs() -> dg.Definitions:
             defs = dg.Definitions.merge(defs, dataset_defs)
 
         return defs
-
-
-def clean_up_dtypes_and_nas(
-    df: pd.DataFrame,
-    na_values: None | str | list[str] = None,
-    logger: logging.Logger | None = None,
-) -> pd.DataFrame:
-    """Clean up data types and NA values in a dataframe"""
-    df = df.copy()
-    if not logger:
-        logger = logging.getLogger(__name__)
-    if na_values is not None:
-        df = df.replace(na_values, pd.NA).dropna()
-
-    for c in df.columns:
-        try:
-            df[c] = pd.to_numeric(df[c])
-        except (ValueError, TypeError) as e:
-            if logger:
-                logger.warning(f"Could not convert column {c} to numeric: {e}")
-
-    return df

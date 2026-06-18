@@ -5,9 +5,9 @@ import dagster as dg
 import pandas as pd
 import pytest
 import xarray as xr
+from config.aveva_resource import AvevaCredentials, AvevaResource
 
 from common import io, test_utils
-from common.resource.aveva_resource import AvevaCredentials, AvevaResource
 from pipeline import AvevaTimeseriesDataset, defs_for_dataset
 
 TEST_DATA_DIR = Path("/mnt/test-data/aveva_timeseries/")
@@ -28,7 +28,6 @@ def defs(dataset_config):
 
 @pytest.fixture
 def aveva_credentials():
-    print(f"client_id={os.environ['AVEVA_CLIENT_ID']}")
     return AvevaCredentials(
         client_id=os.environ["AVEVA_CLIENT_ID"],
         client_secret=os.environ["AVEVA_CLIENT_SECRET"],
@@ -93,10 +92,7 @@ def test_daily_asset(
     snapshot["time"] = pd.to_datetime(
         df["time"],
     )
-    print(f"DF {df}")
-    print(f"snapshot {snapshot}")
-    print(f"DF {df.info()}")
-    print(f"Snap {snapshot.info()}")
+
     pd.testing.assert_frame_equal(df, snapshot)
 
 
@@ -107,10 +103,11 @@ def test_daily_asset(
             "aveva",
             "2026-05-21T17:08:19.590Z",
             {
-                "2026-03-02": TEST_DATA_DIR / "test_aveva/test_aveva_20260302.csv",
+                "2026-05-09": TEST_DATA_DIR / "test_aveva/test_aveva_20260509.csv",
+                "2026-05-10": TEST_DATA_DIR / "test_aveva/test_aveva_20260510.csv",
             },
-            TEST_DATA_DIR / "test_aveva/test_aveva_202603.nc",
-            "2026-03-01",
+            TEST_DATA_DIR / "test_aveva/test_aveva_202605.nc",
+            "2026-05-01",
         ),
     ],
 )
@@ -145,7 +142,6 @@ def test_monthly_asset(
 
     assert isinstance(ds, xr.Dataset)
 
+    snapshot = xr.load_dataset(monthly_snapshot_path, decode_timedelta=False)
 
-#    snapshot = xr.load_dataset(monthly_snapshot_path, decode_timedelta=False)
-
-#    xr.testing.assert_equal(ds, snapshot)
+    xr.testing.assert_equal(ds, snapshot)

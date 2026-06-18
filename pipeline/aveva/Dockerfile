@@ -22,16 +22,20 @@ RUN pixi install -e default
 COPY ./common/ ${HOME}/common/
 
 
+
 RUN pixi shell-hook -e default > /shell-hook.sh \
     && echo 'exec "$@"' >> /shell-hook.sh
 
 COPY ${SOURCE}/*.py \
     ${SOURCE}/*.jinja\
     ${SOURCE}/*.yaml \
+	${SOURCE}/config \
     ${HOME}/
 
 COPY ${SOURCE}/tests/ ${HOME}/tests/
 
+
+COPY ${SOURCE}/config ${HOME}/config
 # COPY ${SOURCE}/platforms \
 #     ${HOME}/platforms
 
