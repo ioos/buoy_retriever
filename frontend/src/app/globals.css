@@ -1,3 +1,26 @@
+@import "tailwindcss";
+
+/* Include class strings from external UI packages */
+@source "../../node_modules/@axdspub/axiom-ui-forms/library/esm/src";
+@source "../../node_modules/@axdspub/axiom-ui-utilities/src";
+
+@theme {
+  --color-ioos-dark-blue: #003087;
+  --color-ioos-medium-blue: #007396;
+}
+
+@layer base {
+  h1 {
+    font-size: var(--text-2xl);
+    color: var(--color-ioos-dark-blue);
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    color: var(--color-ioos-medium-blue);
+  }
+}
+
 /* @import "tw-animate-css"; */
 
 /* @custom-variant dark (&:is(.dark *)); */
