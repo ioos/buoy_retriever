@@ -51,7 +51,7 @@ repos:
   #       exclude: services/geoapi/data.neracoos.org_geoapi/entrypoint.sh
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.28.0
+    rev: 1.30.0
     hooks:
       - id: django-upgrade
         args: [--target-version, "5.2"]
