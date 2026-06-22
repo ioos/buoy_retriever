@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
 from common.config import s3_source
-from common.pipeline.shared_pipeline import BaseTimeseriesConfig, monthly_pipeline_ds
+from common.pipeline.shared_pipeline import BaseTimeseriesConfig
 from common.readers.pandas_csv import PandasCSVReader
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
 from common.sentry import SentryConfig
@@ -180,7 +180,7 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        return monthly_pipeline_ds(context, daily_df, dataset, "NAN")
+        return dataset.config.monthly_pipeline_ds(context, daily_df, "NAN")
 
     daily_job = dg.define_asset_job(
         f"update_{dataset.safe_slug}_daily",

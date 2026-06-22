@@ -32,6 +32,15 @@ class VariableMappingMixin:
         ),
     ]
 
+    def map_output(self, df: pd.DataFrame) -> pd.DataFrame:
+        for var_map in self.variable_mappings:
+            if var_map.source in df.columns:
+                df = df.rename(columns={var_map.source: var_map.output})
+
+        if len(set(df.columns)) != len(df.columns):
+            df = df.groupby(df.columns, axis=1).first()
+        return df
+
 
 class DepthMap(BaseModel):
     """Configure depth mapping for a single variable"""

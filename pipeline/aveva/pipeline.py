@@ -10,7 +10,7 @@ from pydantic import Field
 
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
-from common.pipeline.shared_pipeline import BaseTimeseriesConfig, monthly_pipeline_ds
+from common.pipeline.shared_pipeline import BaseTimeseriesConfig
 from common.sentry import SentryConfig
 
 sentry = SentryConfig(pipeline_name="aveva")
@@ -198,7 +198,7 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        return monthly_pipeline_ds(context, daily_df, dataset, None)
+        return dataset.config.monthly_pipeline_ds(context, daily_df, None)
 
     dataset_assets = [daily_df, monthly_ds]
 

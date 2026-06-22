@@ -37,105 +37,119 @@ class BaseTimeseriesConfig(
     ] = None
     station: Annotated[str, Field(description="Station name/timeseries_id")]
 
+    def with_coordinates(
+        self,
+        context: dg.AssetExecutionContext,
+        ds: xr.Dataset,
+    ) -> xr.Dataset:
+        "Set station, latitude, and longitude coordinates"
+        ds = ds.copy()
+        ds["station"] = self.station
+        if self.latitude is not None:
+            ds["latitude"] = self.latitude
+        if self.longitude is not None:
+            ds["longitude"] = self.longitude
 
-def monthly_pipeline_ds(
-    context: dg.AssetExecutionContext,
-    daily_df: dict[str, pd.DataFrame],
-    dataset: BaseTimeseriesConfig,
-    na_values: None | str | list[str] = None,
-) -> xr.Dataset:
-    """Combine daily dataframes into a monthly NetCDF and apply transformations."""
+        ds = ds.set_coords(["station", "latitude", "longitude"])
+        return ds
 
-    daily_dfs = []
+    def sort_and_index(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Sort, dedupe, make datetimes, set index"""
+        df = df.copy()
+        if self.dataset_type == "profile":
+            indx_var = ["time", "depth"]
+        else:
+            indx_var = "time"
 
-    for df_date, df in daily_df.items():
-        for var_map in dataset.config.variable_mappings:
-            if var_map.source in df.columns:
-                df = df.rename(columns={var_map.source: var_map.output})
-            else:
-                context.log.warning(
-                    f"Source variable '{var_map.source}' not found in data for {df_date}",
-                )
+        df = df.sort_values(indx_var)
+        df = df.drop_duplicates(subset=indx_var)
+        df["time"] = pd.to_datetime(df["time"])
+        df = df.set_index(indx_var)
+        return df
 
-        if len(set(df.columns)) != len(df.columns):
-            context.log.warning(
-                f"Column name collision after renaming for data on {df_date}, trying to squish duplicates",
-            )
-            df = df.groupby(df.columns, axis=1).first()
+    def cleanup_df(
+        self,
+        context: dg.AssetExecutionContext,
+        daily_df: dict[str, pd.DataFrame],
+        na_values: None | str | list[str],
+    ) -> list[pd.DataFrame]:
+        daily_dfs = []
+
+        for df in daily_df.values():
+            df = self.map_output(df)
+
+            time_col = None
 
             # Avoid attempting to convert the time column to numeric inside
             # clean_up_dtypes_and_nas, which causes unnecessary exceptions.
-        if "time" in df.columns:
-            time_col = df["time"]
-            df_wo_time = df.drop(columns=["time"])
-            print(f"df_wo_time {df_wo_time}")
-            df_wo_time = clean_up_dtypes_and_nas(
-                df_wo_time,
+            if "time" in df.columns:
+                time_col = df["time"]
+                df = df.drop(columns=["time"])
+
+            df = self.clean_up_dtypes_and_nas(
+                df,
                 na_values=na_values,
                 logger=context.log,
             )
-            df_wo_time["time"] = time_col
-            df = df_wo_time
-        else:
-            df = clean_up_dtypes_and_nas(df, na_values=na_values, logger=context.log)
-        daily_dfs.append(df)
 
-    df = pd.concat(daily_dfs, ignore_index=True)
+            if time_col is not None:
+                df["time"] = time_col
 
-    if dataset.config.dataset_type == "profile":
-        indx_var = ["time", "depth"]
-    else:
-        indx_var = "time"
+            daily_dfs.append(df)
+        return daily_dfs
 
-    df = df.sort_values(indx_var)
-    df = df.drop_duplicates(subset=indx_var)
-    df["time"] = pd.to_datetime(df["time"])
-    df = df.set_index(indx_var)
+    def monthly_pipeline_ds(
+        self,
+        context: dg.AssetExecutionContext,
+        daily_df: dict[str, pd.DataFrame],
+        na_values: None | str | list[str] = None,
+    ) -> xr.Dataset:
+        """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-    ds = df.to_xarray()
+        daily_dfs = self.cleanup_df(context, daily_df, na_values)
 
-    ds["station"] = dataset.config.station
-    if dataset.config.latitude is not None:
-        ds["latitude"] = dataset.config.latitude
-    if dataset.config.longitude is not None:
-        ds["longitude"] = dataset.config.longitude
+        df = pd.concat(daily_dfs, ignore_index=True)
 
-    ds = ds.set_coords(["station", "latitude", "longitude"])
+        df = self.sort_and_index(df)
 
-    # apply attributes
+        ds = df.to_xarray()
 
-    ds["time"].encoding.update(
-        {
-            "units": "seconds since 1970-01-01T00:00:00Z",
-            "calendar": "gregorian",
-            "standard_name": "time",
-        },
-    )
+        ds = self.with_coordinates(context, ds)
 
-    dataset.config.attributes.add_attributes_from_yaml()
+        # apply attributes
 
-    dataset.config.attributes.apply_to_dataset(ds)
-    context.log.info(ds)
-    return ds
+        ds["time"].encoding.update(
+            {
+                "units": "seconds since 1970-01-01T00:00:00Z",
+                "calendar": "gregorian",
+                "standard_name": "time",
+            },
+        )
 
+        self.attributes.add_attributes_from_yaml()
 
-def clean_up_dtypes_and_nas(
-    df: pd.DataFrame,
-    na_values: None | str | list[str] = None,
-    logger: logging.Logger | None = None,
-) -> pd.DataFrame:
-    """Clean up data types and NA values in a dataframe"""
-    df = df.copy()
-    if not logger:
-        logger = logging.getLogger(__name__)
-    if na_values is not None:
-        df = df.replace(na_values, pd.NA).dropna()
+        self.attributes.apply_to_dataset(ds)
+        context.log.info(ds)
+        return ds
 
-    for c in df.columns:
-        try:
-            df[c] = pd.to_numeric(df[c])
-        except (ValueError, TypeError) as e:
-            if logger:
-                logger.warning(f"Could not convert column {c} to numeric: {e}")
+    def clean_up_dtypes_and_nas(
+        self,
+        df: pd.DataFrame,
+        na_values: None | str | list[str] = None,
+        logger: logging.Logger | None = None,
+    ) -> pd.DataFrame:
+        """Clean up data types and NA values in a dataframe"""
+        df = df.copy()
+        if not logger:
+            logger = logging.getLogger(__name__)
+        if na_values is not None:
+            df = df.replace(na_values, pd.NA).dropna()
 
-    return df
+        for c in df.columns:
+            try:
+                df[c] = pd.to_numeric(df[c])
+            except (ValueError, TypeError) as e:
+                if logger:
+                    logger.warning(f"Could not convert column {c} to numeric: {e}")
+
+        return df
