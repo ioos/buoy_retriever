@@ -84,7 +84,6 @@ def test_daily_asset(
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    # Uncomment to update CSV snapshot
     snapshot = pd.read_csv(
         snapshot_path,
     )
