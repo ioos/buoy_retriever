@@ -184,9 +184,7 @@ def test_daily_asset(
     spec = daily_df.get_asset_spec()
 
     assert daily_df is not None, "There should be a daily_df asset"
-    assert spec.group_name == f"{asset_name}_test", (
-        f"The group name should be {asset_name}_test"
-    )
+    assert spec.group_name == asset_name, f"The group name should be {asset_name}"
     assert spec.description == "Download daily dataframe from S3."
     assert spec.metadata[io.DESIRED_PATH] == dataset_config.daily_partition_path()
 

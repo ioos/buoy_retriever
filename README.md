@@ -80,6 +80,12 @@ Requires `S3_TS_ACCESS_KEY_ID` and `S3_TS_SECRET_ACCESS_KEY` environment variabl
 
 Requires a `HOHONU_API_KEY` environment variable for API access.
 
+### Aveva
+
+[`aveva`](./pipeline/aveva/)
+
+Requires `AVEVA_CLIENT_ID` and `AVEVA_CLIENT_SECRET` environment variables for API access.
+
 
 ## Development
 

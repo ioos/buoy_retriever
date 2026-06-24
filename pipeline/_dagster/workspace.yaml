@@ -7,3 +7,7 @@ load_from:
     host: hohonu
     port: 4000
     location_name: hohonu
+- grpc_server:
+    host: aveva
+    port: 4000
+    location_name: aveva

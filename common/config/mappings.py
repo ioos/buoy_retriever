@@ -32,6 +32,18 @@ class VariableMappingMixin:
         ),
     ]
 
+    def map_output(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Loop over variable_mappings and rename specified variables"""
+        for var_map in self.variable_mappings:
+            if var_map.source in df.columns:
+                df = df.rename(columns={var_map.source: var_map.output})
+
+        if len(set(df.columns)) != len(df.columns):
+            """Deal with duplicate column names
+               Combines columns with identical names by keeping the first non-null value for each row"""
+            df = df.groupby(df.columns, axis=1).first()
+        return df
+
 
 class DepthMap(BaseModel):
     """Configure depth mapping for a single variable"""

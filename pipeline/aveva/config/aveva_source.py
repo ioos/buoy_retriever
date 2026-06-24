@@ -1,0 +1,29 @@
+from typing import Annotated
+
+from pydantic import BaseModel, Field
+
+
+class AvevaSourceConfig(BaseModel):
+    """Configuration for data coming from the Aveva API"""
+
+    resource: Annotated[
+        str,
+        Field(description="The Aveva resource"),
+    ]
+
+    namespace: Annotated[
+        str,
+        Field(description="The Aveva namespace"),
+    ]
+
+
+class AvevaSourceMixin:
+    """Mixin to add Aveva configuration to a dataset or reader"""
+
+    aveva_source: Annotated[
+        AvevaSourceConfig,
+        Field(
+            default_factory=AvevaSourceConfig,
+            description="Configuration for accessing data via Aveva API",
+        ),
+    ]
