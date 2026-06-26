@@ -61,7 +61,7 @@ test-backend:
 
 test-hohonu:
 	docker build -f pipeline/hohonu/Dockerfile -t buoy_retriever-hohonu .
-	docker run -v ./docker-data/test-data:/mnt/test-data:ro buoy_retriever-hohonu pixi run pytest --cov=.
+	docker run -v ./docker-data/test-data:/mnt/test-data buoy_retriever-hohonu pixi run pytest --cov=.
 
 test-aveva:
 	docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .

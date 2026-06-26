@@ -108,6 +108,30 @@ Currently there is some testing for common utilities and Hohonu pipelines.
 
 Test data is stored in `docker-data/test-data`. This includes dataset configurations, which can be synced to and from the backend.
 
+#### Snapshot Testing
+
+`common/test_utils/snapshot.py` contains Pytest fixtures based on [pytest-regressions](https://pytest-regressions.readthedocs.io/en/latest/index.html) for snapshot testing that use our Dagster IO managers (to make that the formats we actually dump and load data are the same).
+
+- `pandas_csv_regression.check(df, basename="test_daily_asset")`
+- `nc_io_regression.check(ds, basename="test_monthly_asset", method="allclose")` (allows selecting which [Xarray test method](https://docs.xarray.dev/en/stable/api/testing.html)).
+
+To use them:
+- Add `pytest_plugins = ["common.test_utils.snapshot"]` to `conftest.py` or to the top of a test file.
+- Create `lazy_datadir` and `original_datadir` fixtures to set where the files will be saved.
+    ```py
+    @pytest.fixture(scope="session")
+    def lazy_datadir() -> Path:
+        return TEST_DATA_DIR
+
+
+    @pytest.fixture(scope="session")
+    def original_datadir() -> Path:
+        return TEST_DATA_DIR
+    ```
+- Call the fixture with `.check(<obj>, basename='extension-less path to check against')`. `test_kwargs={}` can also be added which will be passed to the underlying test method if it supports it.
+- On the first run, they'll fail the test, but write out the file they got.
+- If the file looks good, run the test again to validate that it passes, and add the file to the commit.
+
 ### Data management commands
 
 There are several commands to help sync dataset configs to/from the backend for testing and development.

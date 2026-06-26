@@ -11,7 +11,20 @@ from pipeline import HohonuDataset, defs_for_dataset
 
 from hohonu_api import HohonuApi
 
+pytest_plugins = ["common.test_utils.snapshot"]
+
+
 TEST_DATA_DIR = Path("/mnt/test-data/hohonu/")
+
+
+@pytest.fixture(scope="session")
+def lazy_datadir() -> Path:
+    return TEST_DATA_DIR
+
+
+@pytest.fixture(scope="session")
+def original_datadir() -> Path:
+    return TEST_DATA_DIR
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +52,7 @@ def test_can_build_defs(defs):
 
 
 @pytest.mark.vcr(TEST_DATA_DIR / "cassettes/test_hohonu_pipeline/test_daily_asset.yaml")
-def test_daily_asset(defs, dataset):
+def test_daily_asset(defs, dataset, pandas_csv_regression):
     daily_df = test_utils.get_asset_by_name(defs, "daily_df")
     spec = daily_df.get_asset_spec()
 
@@ -57,10 +70,7 @@ def test_daily_asset(defs, dataset):
 
     assert isinstance(df, pd.DataFrame)
 
-    # Uncomment to update CSV snapshot
-    # df.to_csv(TEST_DATA_DIR / "test_daily_asset.csv", index=False)
-    snapshot = pd.read_csv(TEST_DATA_DIR / "test_daily_asset.csv", parse_dates=["time"])
-    pd.testing.assert_frame_equal(df, snapshot)
+    pandas_csv_regression.check(df, basename="test_daily_asset")
 
 
 def _get_monthly_ds(defs):
@@ -81,7 +91,7 @@ def _get_monthly_ds(defs):
     return monthly_ds, context, ds
 
 
-def test_monthly_nc_asset(defs, dataset):
+def test_monthly_nc_asset(defs, dataset, nc_io_regression):
     monthly_ds, context, ds = _get_monthly_ds(defs)
     assert monthly_ds is not None
 
@@ -96,6 +106,8 @@ def test_monthly_nc_asset(defs, dataset):
         ds["navd88_meters"].attrs["standard_name"]
         == "sea_surface_height_above_geopotential_datum"
     ), "Attributes should be applied"
+
+    nc_io_regression.check(ds, basename="test_monthly_asset", method="allclose")
 
 
 def test_monthly_parquet_asset(defs, dataset):
