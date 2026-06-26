@@ -51,6 +51,16 @@ services:
       POSTGRES_HOST: db
       # CACHE_HOST: cache
       # QUEUE_HOST: queue
+    healthcheck:
+      # Any HTTP response (e.g. 200 from the health endpoint) means Django's
+      # runserver is accepting connections. The pipelines call this API at
+      # Dagster definition-load time, so they must wait until it's ready,
+      # not just until the container has started.
+      test: ["CMD-SHELL", "curl -sS -o /dev/null http://localhost:8080/backend/health/ || exit 1"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -142,7 +152,7 @@ services:
       - ./docker-data/test-data:/mnt/test-data:cached
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
   aveva:
     build:
       context: .
@@ -160,7 +170,7 @@ services:
       - ./docker-data/shared-fs:/mnt/efs/
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
   hohonu:
     build:
       context: .
@@ -179,4 +189,4 @@ services:
       - ./docker-data/test-data:/mnt/test-data:cached
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
