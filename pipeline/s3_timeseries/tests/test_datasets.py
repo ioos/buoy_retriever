@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import boto3
 import dagster as dg
@@ -12,12 +11,10 @@ from common import io, test_utils
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
 from pipeline import S3TimeseriesDataset, defs_for_dataset
 
-TEST_DATA_DIR = Path("/mnt/test-data/s3_timeseries/")
-
 
 @pytest.fixture
-def dataset_config(asset_name, created_dt_str):
-    config_path = TEST_DATA_DIR / f"fixtures/{asset_name}.json"
+def dataset_config(asset_name, created_dt_str, test_data_dir):
+    config_path = test_data_dir / f"fixtures/{asset_name}.json"
     return S3TimeseriesDataset.from_fixture(config_path, created_dt_str)
 
 
@@ -117,56 +114,55 @@ def test_sensor(
         pytest.param(
             "empire_met",
             "2026-01-05T21:15:24.530Z",
-            TEST_DATA_DIR / "empire_met/test_empire_met_20251113.csv",
+            "empire_met/test_empire_met_20251113",
             "2025-11-13",
         ),
         pytest.param(
             "empire_waves",
             "2026-04-08T19:34:39.383Z",
-            TEST_DATA_DIR / "empire_waves/test_empire_waves_20251112.csv",
+            "empire_waves/test_empire_waves_20251112",
             "2025-11-12",
         ),
         pytest.param(
             "empire_ctd",
             "2026-04-08T19:34:01.989Z",
-            TEST_DATA_DIR / "empire_ctd/test_empire_ctd_20251208.csv",
+            "empire_ctd/test_empire_ctd_20251208",
             "2025-12-08",
         ),
         pytest.param(
             "empire_adcp_water",
             "2026-04-08T19:33:23.624Z",
-            TEST_DATA_DIR / "empire_adcp_water/test_empire_adcp_water_20251028.csv",
+            "empire_adcp_water/test_empire_adcp_water_20251028",
             "2025-10-28",
         ),
         pytest.param(
             "empire_adcp_currents",
             "2026-04-08T19:32:26.472Z",
-            TEST_DATA_DIR
-            / "empire_adcp_currents/test_empire_adcp_currents_20251030.csv",
+            "empire_adcp_currents/test_empire_adcp_currents_20251030",
             "2025-10-30",
         ),
         pytest.param(
             "south_fork_currents",
             "2026-04-08T19:35:09.835Z",
-            TEST_DATA_DIR / "south_fork_currents/test_south_fork_currents_20260304.csv",
+            "south_fork_currents/test_south_fork_currents_20260304",
             "2026-03-04",
         ),
         pytest.param(
             "south_fork_waves",
             "2026-04-08T19:36:09.281Z",
-            TEST_DATA_DIR / "south_fork_waves/test_south_fork_waves_20260221.csv",
+            "south_fork_waves/test_south_fork_waves_20260221",
             "2026-02-21",
         ),
         pytest.param(
             "south_fork_water",
             "2026-04-08T19:35:35.695Z",
-            TEST_DATA_DIR / "south_fork_water/test_south_fork_water_20260122.csv",
+            "south_fork_water/test_south_fork_water_20260122",
             "2026-01-22",
         ),
         pytest.param(
             "cvow",
             "2026-04-08T19:31:35.891Z",
-            TEST_DATA_DIR / "cvow/test_cvow_daily_asset.csv",
+            "cvow/test_cvow_daily_asset",
             "2025-12-22",
         ),
     ],
@@ -179,6 +175,7 @@ def test_daily_asset(
     asset_name,
     snapshot_path,
     partition_key,
+    pandas_csv_regression,
 ):
     daily_df = test_utils.get_asset_by_name(defs, "daily_df")
     spec = daily_df.get_asset_spec()
@@ -195,18 +192,7 @@ def test_daily_asset(
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    # Uncomment to update CSV snapshot
-    # df.to_csv(snapshot_path, index=False)
-
-    snapshot = pd.read_csv(
-        snapshot_path,
-    )
-
-    snapshot[dataset_config.config.source_time_var] = pd.to_datetime(
-        df[dataset_config.config.source_time_var],
-    )
-
-    pd.testing.assert_frame_equal(df, snapshot)
+    pandas_csv_regression.check(df, basename=snapshot_path)
 
 
 @pytest.mark.parametrize(
@@ -216,99 +202,93 @@ def test_daily_asset(
             "empire_met",
             "2026-01-05T21:15:24.530Z",
             {
-                "2025-11-13": TEST_DATA_DIR / "empire_met/test_empire_met_20251113.csv",
-                "2025-11-14": TEST_DATA_DIR / "empire_met/test_empire_met_20251114.csv",
+                "2025-11-13": "empire_met/test_empire_met_20251113.csv",
+                "2025-11-14": "empire_met/test_empire_met_20251114.csv",
             },
-            TEST_DATA_DIR / "empire_met/test_empire_met_202511.nc",
+            "empire_met/test_empire_met_202511",
             "2025-11-01",
         ),
         pytest.param(
             "empire_met",
             "2026-01-05T21:15:24.530Z",
             {
-                "2025-10-12": TEST_DATA_DIR / "empire_met/2025-10-12.csv",
-                "2025-10-13": TEST_DATA_DIR / "empire_met/2025-10-13.csv",
+                "2025-10-12": "empire_met/2025-10-12.csv",
+                "2025-10-13": "empire_met/2025-10-13.csv",
             },
-            TEST_DATA_DIR / "empire_met/test_empire_met_202510_nans.nc",
+            "empire_met/test_empire_met_202510_nans",
             "2025-12-01",
         ),
         pytest.param(
             "empire_waves",
             "2026-04-08T19:34:39.383Z",
             {
-                "2025-11-12": TEST_DATA_DIR
-                / "empire_waves/test_empire_waves_20251112.csv",
+                "2025-11-12": "empire_waves/test_empire_waves_20251112.csv",
             },
-            TEST_DATA_DIR / "empire_waves/test_empire_waves_202511.nc",
+            "empire_waves/test_empire_waves_202511",
             "2025-11-01",
         ),
         pytest.param(
             "empire_ctd",
             "2026-04-08T19:34:01.989Z",
             {
-                "2025-12-08": TEST_DATA_DIR / "empire_ctd/test_empire_ctd_20251208.csv",
-                "2025-12-09": TEST_DATA_DIR / "empire_ctd/test_empire_ctd_20251209.csv",
+                "2025-12-08": "empire_ctd/test_empire_ctd_20251208.csv",
+                "2025-12-09": "empire_ctd/test_empire_ctd_20251209.csv",
             },
-            TEST_DATA_DIR / "empire_ctd/test_empire_ctd_202512.nc",
+            "empire_ctd/test_empire_ctd_202512",
             "2025-12-01",
         ),
         pytest.param(
             "empire_adcp_water",
             "2026-04-08T19:33:23.624Z",
             {
-                "2025-10-28": TEST_DATA_DIR
-                / "empire_adcp_water/test_empire_adcp_water_20251028.csv",
+                "2025-10-28": "empire_adcp_water/test_empire_adcp_water_20251028.csv",
             },
-            TEST_DATA_DIR / "empire_adcp_water/test_empire_adcp_water_202510.nc",
+            "empire_adcp_water/test_empire_adcp_water_202510",
             "2025-10-01",
         ),
         pytest.param(
             "empire_adcp_currents",
             "2026-04-08T19:32:26.472Z",
             {
-                "2025-10-30": TEST_DATA_DIR
-                / "empire_adcp_currents/test_empire_adcp_currents_20251030.csv",
+                "2025-10-30": "empire_adcp_currents/test_empire_adcp_currents_20251030.csv",
             },
-            TEST_DATA_DIR / "empire_adcp_currents/test_empire_adcp_currents_202510.nc",
+            "empire_adcp_currents/test_empire_adcp_currents_202510",
             "2025-10-01",
         ),
         pytest.param(
             "south_fork_currents",
             "2026-04-08T19:35:09.835Z",
             {
-                "2026-03-04": TEST_DATA_DIR
-                / "south_fork_currents/test_south_fork_currents_20260304.csv",
+                "2026-03-04": "south_fork_currents/test_south_fork_currents_20260304.csv",
             },
-            TEST_DATA_DIR / "south_fork_currents/test_south_fork_currents_202603.nc",
+            "south_fork_currents/test_south_fork_currents_202603",
             "2026-03-01",
         ),
         pytest.param(
             "south_fork_waves",
             "2026-04-08T19:36:09.281Z",
             {
-                "2026-02-21": TEST_DATA_DIR
-                / "south_fork_waves/test_south_fork_waves_20260221.csv",
+                "2026-02-21": "south_fork_waves/test_south_fork_waves_20260221.csv",
             },
-            TEST_DATA_DIR / "south_fork_waves/test_south_fork_waves_202602.nc",
+            "south_fork_waves/test_south_fork_waves_202602",
             "2026-02-01",
         ),
         pytest.param(
             "south_fork_water",
             "2026-04-08T19:35:35.695Z",
             {
-                "2026-01-22": TEST_DATA_DIR
-                / "south_fork_water/test_south_fork_water_20260122.csv",
+                "2026-01-22": "south_fork_water/test_south_fork_water_20260122.csv",
             },
-            TEST_DATA_DIR / "south_fork_water/test_south_fork_water_202601.nc",
+            "south_fork_water/test_south_fork_water_202601",
             "2026-01-01",
         ),
         pytest.param(
             "cvow",
             "2026-04-08T19:31:35.891Z",
             {
-                "2025-12-22": TEST_DATA_DIR / "cvow/test_cvow_20251222.csv",
+                "2025-12-22": "cvow/test_cvow_20251222.csv",
             },
-            TEST_DATA_DIR / "cvow/test_cvow_202512.nc",
+            "cvow/test_cvow_202512",
             "2025-12-01",
         ),
     ],
@@ -320,6 +300,8 @@ def test_monthly_asset(
     daily_snapshot_dict,
     monthly_snapshot_path,
     monthly_partition_key,
+    nc_io_regression,
+    test_data_dir,
 ):
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
     spec = monthly_ds.get_asset_spec()
@@ -334,19 +316,13 @@ def test_monthly_asset(
 
     daily_df = {}
 
-    for daily_key in daily_snapshot_dict:
+    for daily_key, daily_path in daily_snapshot_dict.items():
         daily_df[daily_key] = pd.read_csv(
-            daily_snapshot_dict[daily_key],
+            test_data_dir / daily_path,
             parse_dates=[dataset_config.config.source_time_var],
         )
 
     ds = monthly_ds(context, daily_df=daily_df)
 
     assert isinstance(ds, xr.Dataset)
-
-    # Uncomment to update monthly NetCDF snapshot
-    # ds.to_netcdf(monthly_snapshot_path)
-
-    snapshot = xr.load_dataset(monthly_snapshot_path, decode_timedelta=False)
-
-    xr.testing.assert_equal(ds, snapshot)
+    nc_io_regression.check(ds, basename=monthly_snapshot_path)
