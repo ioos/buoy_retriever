@@ -69,15 +69,16 @@ jobs:
         cat pixi_packages.txt >> $GITHUB_STEP_SUMMARY
 
     - name: Run tests inside container
-      run: |
-          docker run -v ./docker-data/test-data:/mnt/test-data:ro --name test-container -e CI=true ${{ env.IMAGE_NAME }}:latest /bin/sh -c "pixi run pytest --cov=. --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy"
+      run: >
+          docker run -v ./docker-data/test-data:/mnt/test-data:ro --name test-container -e CI=true ${{ env.IMAGE_NAME }}:latest /bin/sh -c
+          "pixi run pytest --cov=. --cov-report=xml:/tmp/coverage.xml --cov-report=term-missing --junitxml=/tmp/junit.xml -o junit_family=legacy"
 
     - name: Extract coverage data
       run: |
-          docker cp test-container:/home/ioos/coverage.xml /home/uwsgi/coverage.xml || true
+          docker cp test-container:/tmp/coverage.xml coverage.xml
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
@@ -89,7 +90,7 @@ jobs:
 
     - name: Extract test results
       run: |
-          docker cp test-container:/home/ioos/junit.xml /home/uwsgi/junit.xml || true
+          docker cp test-container:/tmp/junit.xml junit.xml
 
     - name: Upload test results to Codecov
       uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1
@@ -149,7 +150,7 @@ jobs:
         uv run pytest -vv --cov-report=xml --junitxml=junit.xml -o junit_family=legacy
 
     - name: Upload coverage reports to Codecov with GitHub Action
-      uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+      uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:

@@ -223,11 +223,11 @@ jobs:
       - name: Extract coverage data
         if: ${{ inputs.test_command && inputs.coverage_flags != '' }}
         run: |
-            docker cp test-container:/home/ioos/coverage.xml ${{ inputs.working_directory }}/coverage.xml || true
+            docker cp test-container:/tmp/coverage.xml coverage.xml
 
       - name: Upload coverage to Codecov
         if: ${{ inputs.test_command && inputs.coverage_flags != '' }}
-        uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -240,7 +240,7 @@ jobs:
       - name: Extract test results
         if: ${{ inputs.test_command && inputs.upload_tests }}
         run: |
-            docker cp test-container:/home/ioos/junit.xml ${{ inputs.working_directory }}/junit.xml || true
+            docker cp test-container:/tmp/junit.xml junit.xml
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() && inputs.test_command && inputs.upload_tests }}
