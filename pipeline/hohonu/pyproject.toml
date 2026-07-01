@@ -2,8 +2,9 @@
 extend = "../../ruff.toml"
 lint.isort.known-local-folder = [ "hohonu_api" ]
 
-[tool.pytest.ini_options]
-pythonpath = "."
+[tool.pytest]
+pythonpath = [ "." ]
+minversion = "9"
 
 [tool.coverage.run]
 omit = [
@@ -38,9 +39,10 @@ pyyaml = ">=6.0.2,<7"
 pyarrow = ">=24.0.0,<25"
 
 [tool.pixi.feature.dev.dependencies]
-pytest = "*"
+pytest = ">=9"
 pytest-recording = ">=0.13.4,<0.14"
 pytest-cov = "*"
+pytest-regressions = ">=2.11.0,<3"
 
 [tool.pixi.feature.dev.tasks]
 pytest = "pytest -vv --ignore=common --record-mode=once"

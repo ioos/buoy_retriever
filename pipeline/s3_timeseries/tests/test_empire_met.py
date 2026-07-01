@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import dagster as dg
 import pandas as pd
 import pytest
@@ -8,12 +6,10 @@ import xarray as xr
 from common import io, test_utils
 from pipeline import S3TimeseriesDataset, defs_for_dataset
 
-TEST_DATA_DIR = Path("/mnt/test-data/s3_timeseries/")
-
 
 @pytest.fixture
-def dataset_config():
-    config_path = TEST_DATA_DIR / "fixtures/empire_met.json"
+def dataset_config(test_data_dir):
+    config_path = test_data_dir / "fixtures/empire_met.json"
     return S3TimeseriesDataset.from_fixture(config_path, "2026-01-09T01:31:15.453Z")
 
 
@@ -51,7 +47,7 @@ def test_sensor(defs, mocked_s3, s3_credentials):
 
 
 @pytest.mark.aws
-def test_daily_asset(defs, dataset_config, s3_resource):
+def test_daily_asset(defs, dataset_config, s3_resource, pandas_csv_regression):
     daily_df = test_utils.get_asset_by_name(defs, "daily_df")
     spec = daily_df.get_asset_spec()
 
@@ -67,15 +63,10 @@ def test_daily_asset(defs, dataset_config, s3_resource):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    snapshot_path = TEST_DATA_DIR / "empire_met/test_empire_met_daily_asset.csv"
-
-    # Uncomment to update CSV snapshot
-    # df.to_csv(snapshot_path, index=False)
-    snapshot = pd.read_csv(snapshot_path, parse_dates=["datetime"])
-    pd.testing.assert_frame_equal(df, snapshot)
+    pandas_csv_regression.check(df, basename="empire_met/test_empire_met_daily_asset")
 
 
-def test_monthly_asset(defs, dataset_config):
+def test_monthly_asset(defs, dataset_config, nc_io_regression, test_data_dir):
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
     spec = monthly_ds.get_asset_spec()
     assert monthly_ds is not None
@@ -89,7 +80,7 @@ def test_monthly_asset(defs, dataset_config):
 
     daily_df = {
         "2025-11-12": pd.read_csv(
-            TEST_DATA_DIR / "empire_met/test_empire_met_daily_asset.csv",
+            test_data_dir / "empire_met/test_empire_met_daily_asset.csv",
             parse_dates=["datetime"],
         ),
     }
@@ -99,24 +90,20 @@ def test_monthly_asset(defs, dataset_config):
     ds = monthly_ds(context, daily_df=daily_df)
 
     assert isinstance(ds, xr.Dataset)
-    snapshot_path = TEST_DATA_DIR / "empire_met/test_empire_met_monthly_asset.nc"
-    # ds.to_netcdf(snapshot_path)
-    snapshot = xr.load_dataset(snapshot_path)
-
-    xr.testing.assert_equal(ds, snapshot)
+    nc_io_regression.check(ds, basename="empire_met/test_empire_met_monthly_asset")
 
 
-def test_monthly_asset_with_nans(defs, dataset_config):
+def test_monthly_asset_with_nans(defs, dataset_config, nc_io_regression, test_data_dir):
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
     context = dg.build_asset_context(partition_key="2025-10-01")
 
     daily_df = {
         "2025-10-12": pd.read_csv(
-            TEST_DATA_DIR / "empire_met/2025-10-12.csv",
+            test_data_dir / "empire_met/2025-10-12.csv",
             parse_dates=["datetime"],
         ),
         "2025-10-13": pd.read_csv(
-            TEST_DATA_DIR / "empire_met/2025-10-13.csv",
+            test_data_dir / "empire_met/2025-10-13.csv",
             parse_dates=["datetime"],
         ),
     }
@@ -124,12 +111,7 @@ def test_monthly_asset_with_nans(defs, dataset_config):
     ds = monthly_ds(context, daily_df=daily_df)
 
     assert isinstance(ds, xr.Dataset)
-    snapshot_path = (
-        TEST_DATA_DIR / "empire_met/test_empire_met_monthly_asset_with_nans.nc"
+    nc_io_regression.check(
+        ds,
+        basename="empire_met/test_empire_met_monthly_asset_with_nans",
     )
-
-    # Uncomment to update NaN snapshot
-    # ds.to_netcdf(snapshot_path)
-    snapshot = xr.load_dataset(snapshot_path)
-
-    xr.testing.assert_equal(ds, snapshot)

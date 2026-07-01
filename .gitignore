@@ -51,6 +51,8 @@ coverage.xml
 .pytest_cache/
 cover/
 junit.xml
+# pytest-regression comparison data
+docker-data/test-data/**/*.obtained.*
 
 # Translations
 *.mo

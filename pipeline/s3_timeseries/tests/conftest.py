@@ -1,10 +1,16 @@
 import os
+from pathlib import Path
 
 import boto3
 import pytest
 from moto import mock_aws
 
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
+
+pytest_plugins = ["common.test_utils.snapshot"]
+
+
+TEST_DATA_DIR = Path("/mnt/test-data/s3_timeseries/")
 
 
 def pytest_addoption(parser):
@@ -51,3 +57,18 @@ def s3_resource(s3_credentials):
 def mocked_s3():
     with mock_aws():
         yield boto3.client("s3", region_name="us-east-1")
+
+
+@pytest.fixture(scope="session")
+def test_data_dir() -> Path:
+    return TEST_DATA_DIR
+
+
+@pytest.fixture(scope="session")
+def lazy_datadir() -> Path:
+    return TEST_DATA_DIR
+
+
+@pytest.fixture(scope="session")
+def original_datadir() -> Path:
+    return TEST_DATA_DIR
