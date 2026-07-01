@@ -9,7 +9,7 @@ from typing import Any
 from django.apps import apps
 from django.db.models import Field, Model
 
-from .conf import UNSET, GlobalConfig, load_global_config, resolve_auth
+from .conf import UNSET, GlobalConfig, TableInputConfig, load_global_config
 
 ALL_OPERATIONS = ("list", "read", "create", "update", "delete")
 
@@ -106,35 +106,32 @@ class TableConfig:
         return self.permission_map[action]
 
 
-def _build_table_config(name: str, raw: Any, gc: GlobalConfig) -> TableConfig:
-    # Shorthand: ``"table": "app_label.Model"``.
-    if isinstance(raw, str) or (isinstance(raw, type) and issubclass(raw, Model)):
-        raw = {"model": raw}
-    if not isinstance(raw, dict):
-        msg = f"TABLES[{name!r}] must be a dotted model path, a Model, or a dict"
-        raise TypeError(msg)
-
-    model = _resolve_model(raw["model"])
+def _build_table_config(
+    name: str,
+    raw: TableInputConfig,
+    gc: GlobalConfig,
+) -> TableConfig:
+    model = _resolve_model(raw.model)
     concrete = _concrete_field_names(model)
     valid_tokens = _valid_field_tokens(model)
     relations = _relation_accessor_names(model)
 
-    fields = tuple(raw.get("fields", concrete))
+    fields = tuple(raw.fields if raw.fields is not None else concrete)
     unknown = set(fields) - valid_tokens
     if unknown:
         msg = f"TABLES[{name!r}]['fields'] references unknown fields: {sorted(unknown)}"
         raise ValueError(msg)
 
-    filterable = frozenset(raw.get("filterable", fields))
-    orderable = frozenset(raw.get("orderable", fields))
+    filterable = frozenset(raw.filterable if raw.filterable is not None else fields)
+    orderable = frozenset(raw.orderable if raw.orderable is not None else fields)
 
     default_writable = [
         f.name for f in model._meta.concrete_fields if _is_writable_default(f)
     ]
-    writable = frozenset(raw.get("writable", default_writable))
+    writable = frozenset(raw.writable if raw.writable is not None else default_writable)
 
-    embeddable = frozenset(raw.get("embeddable", ()))
-    bad_embeds = set(embeddable) - relations
+    embeddable = frozenset(raw.embeddable)
+    bad_embeds = embeddable - relations
     if bad_embeds:
         msg = (
             f"TABLES[{name!r}]['embeddable'] references non-relation accessors: "
@@ -142,22 +139,16 @@ def _build_table_config(name: str, raw: Any, gc: GlobalConfig) -> TableConfig:
         )
         raise ValueError(msg)
 
-    operations = tuple(raw.get("operations", ALL_OPERATIONS))
-    bad_ops = set(operations) - set(ALL_OPERATIONS)
-    if bad_ops:
-        msg = (
-            f"TABLES[{name!r}]['operations'] has unknown operations: {sorted(bad_ops)}"
-        )
-        raise ValueError(msg)
+    operations = tuple(raw.operations if raw.operations is not None else ALL_OPERATIONS)
 
     permission_map = _default_permission_map(model)
-    permission_map.update(raw.get("permission_map", {}))
+    permission_map.update(raw.permission_map)
 
-    permissions = raw.get("permissions", gc.default_permissions)
+    permissions = (
+        raw.permissions if raw.permissions is not None else gc.default_permissions
+    )
 
-    auth = raw["auth"] if "auth" in raw else gc.default_auth
-    if "auth" in raw:
-        auth = resolve_auth(raw["auth"])
+    auth = raw.auth if raw.auth is not UNSET else gc.default_auth
 
     return TableConfig(
         name=name,
@@ -168,7 +159,7 @@ def _build_table_config(name: str, raw: Any, gc: GlobalConfig) -> TableConfig:
         orderable=orderable,
         writable=writable,
         embeddable=embeddable,
-        pk=raw.get("pk", model._meta.pk.name),
+        pk=raw.pk if raw.pk is not None else model._meta.pk.name,
         permissions=permissions,
         permission_map=permission_map,
         auth=auth,
