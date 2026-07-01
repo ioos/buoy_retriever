@@ -7,10 +7,16 @@ on:
         paths:
             - common/**
             - pipeline/s3_timeseries/**
+            - .github/workflows/_shortsha.yml
+            - .github/workflows/_build_image.yml
+            - .github/workflows/pipeline_s3_timeseries.yml
     pull_request:
         paths:
             - common/**
             - pipeline/s3_timeseries/**
+            - .github/workflows/_shortsha.yml
+            - .github/workflows/_build_image.yml
+            - .github/workflows/pipeline_s3_timeseries.yml
     workflow_dispatch:
 
 jobs:
@@ -20,6 +26,7 @@ jobs:
     build_test_push:
         needs: [shortsha]
         uses: ./.github/workflows/_build_image.yml
+        secrets: inherit
         with:
             working_directory: ./pipeline/s3_timeseries
             image_name: buoy_retriever_s3_timeseries
