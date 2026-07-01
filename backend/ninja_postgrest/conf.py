@@ -2,17 +2,26 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal
 
 from django.conf import settings
 from django.utils.module_loading import import_string
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# Sentinel distinguishing "not configured" from an explicit ``None`` (which, for
-# auth, means "no authentication required").
-UNSET = object()
+Operation = Literal["list", "read", "create", "update", "delete"]
+PermissionMode = Literal["guardian", "model", "open"]
 
-VALID_PERMISSION_MODES = ("guardian", "model", "open")
+
+class _Unset:
+    """Sentinel distinguishing "not configured" from an explicit ``None``.
+
+    An explicit ``None`` tells Django-Ninja that no authentication is required;
+    ``UNSET`` means the field was never configured and nothing is passed.
+    """
+
+
+# Module-level singleton imported by registry.py
+UNSET: Any = _Unset()
 
 
 def _resolve_auth(value: Any) -> Any:
@@ -21,7 +30,7 @@ def _resolve_auth(value: Any) -> Any:
     Accepts an import-path string, a callable/instance, a list of either, or
     ``None``. Strings are imported; lists are resolved element-wise.
     """
-    if value is None or value is UNSET:
+    if value is None or isinstance(value, _Unset):
         return value
     if isinstance(value, str):
         return import_string(value)
@@ -30,33 +39,74 @@ def _resolve_auth(value: Any) -> Any:
     return value
 
 
-@dataclass
-class GlobalConfig:
+class TableInputConfig(BaseModel):
+    """Raw per-table settings from ``NINJA_POSTGREST['TABLES']``.
+
+    Field lists (``fields``, ``filterable``, ``orderable``, ``writable``) are
+    ``None`` by default, meaning "inherit the model-derived default" — the
+    registry resolves the actual values once the Django model is available.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    model: Any  # "app_label.ModelName" or a Model subclass — resolved by registry
+    fields: list[str] | None = None
+    filterable: list[str] | None = None
+    orderable: list[str] | None = None
+    writable: list[str] | None = None
+    embeddable: list[str] = Field(default_factory=list)
+    operations: list[Operation] | None = None
+    permissions: PermissionMode | None = None
+    permission_map: dict[str, str] = Field(default_factory=dict)
+    auth: Any = UNSET
+    pk: str | None = None
+
+    @field_validator("auth", mode="before")
+    @classmethod
+    def resolve_auth_strings(cls, v: Any) -> Any:
+        return _resolve_auth(v)
+
+
+class GlobalConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     default_auth: Any = UNSET
-    default_permissions: str = "guardian"
+    default_permissions: PermissionMode = "guardian"
     max_limit: int = 1000
     default_limit: int | None = None
-    tables: dict[str, Any] = field(default_factory=dict)
+    tables: dict[str, TableInputConfig] = Field(default_factory=dict)
+
+    @field_validator("default_auth", mode="before")
+    @classmethod
+    def resolve_auth_strings(cls, v: Any) -> Any:
+        return _resolve_auth(v)
+
+    @field_validator("tables", mode="before")
+    @classmethod
+    def normalize_tables(cls, v: Any) -> dict:
+        if not v:
+            return {}
+        result = {}
+        for k, val in v.items():
+            if isinstance(val, (str, type)):
+                result[k] = {"model": val}
+            elif isinstance(val, dict):
+                result[k] = val
+            else:
+                msg = f"TABLES[{k!r}] must be a dotted model path, a Model class, or a dict"
+                raise ValueError(msg)
+        return result
 
 
 def load_global_config() -> GlobalConfig:
     """Read ``settings.NINJA_POSTGREST`` and apply defaults."""
     raw: dict[str, Any] = getattr(settings, "NINJA_POSTGREST", {}) or {}
-
-    default_permissions = raw.get("DEFAULT_PERMISSIONS", "guardian")
-    if default_permissions not in VALID_PERMISSION_MODES:
-        msg = (
-            f"NINJA_POSTGREST['DEFAULT_PERMISSIONS'] must be one of "
-            f"{VALID_PERMISSION_MODES!r}, got {default_permissions!r}"
-        )
-        raise ValueError(msg)
-
     return GlobalConfig(
-        default_auth=_resolve_auth(raw.get("DEFAULT_AUTH", UNSET)),
-        default_permissions=default_permissions,
-        max_limit=int(raw.get("MAX_LIMIT", 1000)),
+        default_auth=raw.get("DEFAULT_AUTH", UNSET),
+        default_permissions=raw.get("DEFAULT_PERMISSIONS", "guardian"),
+        max_limit=raw.get("MAX_LIMIT", 1000),
         default_limit=raw.get("DEFAULT_LIMIT"),
-        tables=raw.get("TABLES", {}) or {},
+        tables=raw.get("TABLES"),
     )
 
 
