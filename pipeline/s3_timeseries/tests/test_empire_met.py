@@ -63,12 +63,6 @@ def test_daily_asset(defs, dataset_config, s3_resource, pandas_csv_regression):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    # snapshot_path = TEST_DATA_DIR / "empire_met/test_empire_met_daily_asset.csv"
-
-    # Uncomment to update CSV snapshot
-    # df.to_csv(snapshot_path, index=False)
-    # snapshot = pd.read_csv(snapshot_path, parse_dates=["datetime"])
-    # pd.testing.assert_frame_equal(df, snapshot)
     pandas_csv_regression.check(df, basename="empire_met/test_empire_met_daily_asset")
 
 
