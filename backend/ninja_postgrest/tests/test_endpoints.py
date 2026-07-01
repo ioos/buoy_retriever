@@ -7,9 +7,13 @@ These run against the project's configured tables (``datasets`` /
 import json
 
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import Client
+from django.test import Client, override_settings
 from guardian.shortcuts import assign_perm
+
+from ninja_postgrest.conf import reset_global_config
+from ninja_postgrest.registry import reset_registry
 
 from datasets.models import Dataset, DatasetConfig
 from pipelines.models import Pipeline
@@ -181,11 +185,22 @@ def test_embed_forward_fk(datasets, admin):
 
 
 def test_embed_unregistered_model_denied(datasets, admin):
-    # 'pipeline' is listed as embeddable, but Pipeline is not a registered
-    # table -> embedding it is explicitly denied.
-    resp = client_for(admin).get(f"{PG}/datasets?select=slug,pipeline(slug)")
-    assert resp.status_code == 400
-    assert "not a registered table" in resp.json()["message"]
+    # 'pipeline' is listed as embeddable, but we simulate Pipeline not being a
+    # registered table by removing it from TABLES for this test.
+    tables_without_pipelines = {
+        k: v for k, v in settings.NINJA_POSTGREST["TABLES"].items() if k != "pipelines"
+    }
+    overridden = {**settings.NINJA_POSTGREST, "TABLES": tables_without_pipelines}
+    with override_settings(NINJA_POSTGREST=overridden):
+        reset_global_config()
+        reset_registry()
+        try:
+            resp = client_for(admin).get(f"{PG}/datasets?select=slug,pipeline(slug)")
+            assert resp.status_code == 400
+            assert "not a registered table" in resp.json()["message"]
+        finally:
+            reset_global_config()
+            reset_registry()
 
 
 def test_embed_not_allowed_400(datasets, admin):
