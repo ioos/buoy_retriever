@@ -110,7 +110,7 @@ def test_monthly_nc_asset(defs, dataset, nc_io_regression):
     nc_io_regression.check(ds, basename="test_monthly_asset", method="allclose")
 
 
-def test_monthly_parquet_asset(defs, dataset):
+def test_monthly_parquet_asset(defs, dataset, pandas_parquet_regression):
     monthly_parquet = test_utils.get_asset_by_name(defs, "monthly_parquet")
     monthly_ds, context, ds = _get_monthly_ds(defs)
 
@@ -124,3 +124,5 @@ def test_monthly_parquet_asset(defs, dataset):
     assert isinstance(df, pd.DataFrame)
     assert isinstance(ds, xr.Dataset)
     assert "navd88_meters" in df.columns
+
+    pandas_parquet_regression.check(df, basename="test_monthly_parquet_asset")
