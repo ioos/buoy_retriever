@@ -43,21 +43,30 @@ class HohonuDataset(config.DatasetBase):
         Field(description="The configuration for the dataset."),
     ]
 
-    def daily_partition_path(self):
+    def daily_csv_partition_path(self):
         """Path to daily partitions"""
         return (
             self.safe_slug
             + "/daily/{partition_key_dt:%Y}/{partition_key_dt:%m}/{partition_key_dt:%Y-%m-%d}.csv"
         )
 
-    def monthly_partition_path(self):
+    def monthly_nc_partition_path(self):
         """Path to monthly partitions"""
         return (
             self.safe_slug
             # + "/monthly/{partition_key_dt:%Y}/"
-            + "/"
+            + "/monthly/nc/"
             + self.slug
             + "_{partition_key_dt:%Y-%m}.nc"
+        )
+
+    def monthly_parquet_partition_path(self):
+        """Path to monthly partitions"""
+        return (
+            self.safe_slug
+            + "/monthly/parquet/{partition_key_dt:%Y}/"
+            + self.slug
+            + "_{partition_key_dt:%Y-%m}.parquet"
         )
 
 
@@ -80,7 +89,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     @dg.asset(
         partitions_def=daily_partitions,
         description=f"Download daily dataframe from Hohonu for {dataset.slug}",
-        metadata={io.DESIRED_PATH: dataset.daily_partition_path()},
+        metadata={io.DESIRED_PATH: dataset.daily_csv_partition_path()},
         **io.CSV_ASSET_KWARGS,
         **common_asset_kwargs,
     )
@@ -118,7 +127,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         },
         automation_condition=assets.auto_condition_eager_allow_missing(),
         partitions_def=monthly_partitions,
-        metadata={io.DESIRED_PATH: dataset.monthly_partition_path()},
+        metadata={io.DESIRED_PATH: dataset.monthly_nc_partition_path()},
         **io.NETCDF_ASSET_KWARGS,
         **common_asset_kwargs,
     )
@@ -167,4 +176,20 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
 
         return ds
 
-    return dg.Definitions(assets=[daily_df, monthly_ds])
+    @dg.asset(
+        description=f"Monthly parquet files for {dataset.slug}",
+        automation_condition=assets.auto_condition_eager_allow_missing(),
+        partitions_def=monthly_partitions,
+        metadata={io.DESIRED_PATH: dataset.monthly_parquet_partition_path()},
+        **io.PARQUET_ASSET_KWARGS,
+        **common_asset_kwargs,
+    )
+    @sentry.capture_op_exceptions
+    def monthly_parquet(
+        context: dg.AssetExecutionContext,
+        monthly_ds: xr.Dataset,
+    ) -> pd.DataFrame:
+        """Generate monthly parquet files from monthly xarray datasets (netcdf)"""
+        return monthly_ds.to_dataframe()
+
+    return dg.Definitions(assets=[daily_df, monthly_ds, monthly_parquet])

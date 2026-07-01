@@ -11,6 +11,7 @@ from .csv_io import PandasCsvIoManager
 from .datastore import Datastore
 from .json_io import JsonIOManager
 from .nc_io import XarrayNcIoManager
+from .parquet_io import PandasParquetIoManager
 from .tags import (
     ALLOW_MISSING_PARTITIONS,  # noqa: F401
     DESIRED_PATH,  # noqa: F401
@@ -24,6 +25,7 @@ from .tags import (
 CSV_KEY = "csv_io"
 JSON_KEY = "json_io"
 NETCDF_KEY = "netcdf_io"
+PARQUET_KEY = "parquet_io"
 
 CSV_ASSET_KWARGS = {
     "io_manager_key": CSV_KEY,
@@ -40,6 +42,12 @@ NETCDF_ASSET_KWARGS = {
     "io_manager_key": NETCDF_KEY,
     "compute_kind": "xarray",
     "tags": {"dagster/storage_kind": "NetCDF"},
+}
+
+PARQUET_ASSET_KWARGS = {
+    "io_manager_key": PARQUET_KEY,
+    "compute_kind": "pandas",
+    "tags": {"dagster/storage_kind": "parquet"},
 }
 
 # MetOcean OSO development public bucket
@@ -100,6 +108,7 @@ def common_resources(
         CSV_KEY: PandasCsvIoManager(**io_kwargs),
         JSON_KEY: JsonIOManager(**io_kwargs),
         NETCDF_KEY: XarrayNcIoManager(**io_kwargs),
+        PARQUET_KEY: PandasParquetIoManager(**io_kwargs),
     }
 
     return datastore, io_managers
