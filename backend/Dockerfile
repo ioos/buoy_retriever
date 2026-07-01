@@ -40,6 +40,7 @@ COPY --chown=${USER}:${USER} ./account ${APP_DIR}/account
 COPY --chown=${USER}:${USER} ./buoy_retriever ${APP_DIR}/buoy_retriever
 COPY --chown=${USER}:${USER} ./datasets ${APP_DIR}/datasets
 COPY --chown=${USER}:${USER} ./pipelines ${APP_DIR}/pipelines
+COPY --chown=${USER}:${USER} ./ninja_postgrest ${APP_DIR}/ninja_postgrest
 
 RUN echo '#!/bin/bash' > /support/shell-hook.sh \
     && pixi shell-hook -e default --shell bash | grep -vie "activate.d" | grep -vie "completion" >> /support/shell-hook.sh \

@@ -89,10 +89,35 @@ INSTALLED_APPS = [
     "health_check.db",
     "corsheaders",
     "guardian",
+    "ninja_postgrest",
     "account",
     "datasets",
     "pipelines",
 ]
+
+# PostgREST-compatible endpoints (see the ninja_postgrest app).
+NINJA_POSTGREST = {
+    "DEFAULT_AUTH": [
+        "ninja.security.django_auth",
+        "pipelines.api.pipeline_api_key_auth",
+    ],
+    "DEFAULT_PERMISSIONS": "guardian",
+    "MAX_LIMIT": 1000,
+    "TABLES": {
+        "datasets": {
+            "model": "datasets.Dataset",
+            "embeddable": ["configs", "pipeline"],
+        },
+        "dataset_configs": {
+            "model": "datasets.DatasetConfig",
+            "embeddable": ["dataset"],
+        },
+        "pipelines": {
+            "model": "pipelines.Pipeline",
+            "embeddable": ["datasets"],
+        },
+    },
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
