@@ -8,7 +8,12 @@ import dagster as dg
 import pytest
 from pytest_regressions.common import perform_regression_check
 
-from common.io import Datastore, PandasCsvIoManager, XarrayNcIoManager
+from common.io import (
+    Datastore,
+    PandasCsvIoManager,
+    PandasParquetIoManager,
+    XarrayNcIoManager,
+)
 from common.io.base import IOManagerBase
 
 if TYPE_CHECKING:
@@ -88,6 +93,11 @@ class PandasCsvIoRegressionFixture(IoManagerRegressionFixture["pd.DataFrame"]):
         pd.testing.assert_frame_equal(obtained, expected, **kwargs)
 
 
+class PandasParquetIoRegressionFixture(PandasCsvIoRegressionFixture):
+    extension = ".parquet"
+    io_manager_cls = PandasParquetIoManager
+
+
 class NcIoRegressionFixture(IoManagerRegressionFixture["xr.Dataset"]):
     extension = ".nc"
     io_manager_cls = XarrayNcIoManager
@@ -120,6 +130,15 @@ def nc_io_regression(
     request: pytest.FixtureRequest,
 ) -> NcIoRegressionFixture:
     return NcIoRegressionFixture(datadir, original_datadir, request)
+
+
+@pytest.fixture
+def pandas_parquet_regression(
+    datadir: "LazyDataDir",
+    original_datadir: Path,
+    request: pytest.FixtureRequest,
+) -> PandasParquetIoRegressionFixture:
+    return PandasParquetIoRegressionFixture(datadir, original_datadir, request)
 
 
 @pytest.fixture
