@@ -3,6 +3,8 @@ environments:
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    indexes:
+    - https://pypi.org/simple
     options:
       pypi-prerelease-mode: if-necessary-or-explicit
     packages:
@@ -206,6 +208,12 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-ng-2.3.2-hceb46e0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstandard-0.25.0-py313h54dd161_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb8e6e7a_2.conda
+      - pypi: https://files.pythonhosted.org/packages/76/56/6d6872f79d14c0cb02f1646cbb4592eef935857c0951a105874b7b62a0c3/contextlib2-21.6.0-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/38/0d29a6fd7d0d1373f0c0c88a04ba20e359b257753ac497564cd660fc1d55/cryptography-48.0.0-cp311-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/91/13/3fab25e603bc5d5f8fabe17ff455bcd03cb0583023713262a62b35333d41/django_ninja_extra-0.30.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0d/ac/24260402a7336a148909ad8827780c57ffa651e3930d9c1502222213095b/django_ninja_jwt-5.4.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-2_gnu.tar.bz2
       - conda: https://conda.anaconda.org/conda-forge/noarch/amqp-5.2.0-pyhd8ed1ab_2.conda
@@ -289,9 +297,17 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/wcwidth-0.2.14-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/zstandard-0.25.0-py313h62ef0ea_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/zstd-1.5.7-hbcf94c1_2.conda
+      - pypi: https://files.pythonhosted.org/packages/76/56/6d6872f79d14c0cb02f1646cbb4592eef935857c0951a105874b7b62a0c3/contextlib2-21.6.0-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/14/d5/e9c4ef932c8d800490c34d8bd589d64a31d5890e27ec9e9ad532be893294/cryptography-48.0.0-cp311-abi3-manylinux_2_28_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/91/13/3fab25e603bc5d5f8fabe17ff455bcd03cb0583023713262a62b35333d41/django_ninja_extra-0.30.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0d/ac/24260402a7336a148909ad8827780c57ffa651e3930d9c1502222213095b/django_ninja_jwt-5.4.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    indexes:
+    - https://pypi.org/simple
     options:
       pypi-prerelease-mode: if-necessary-or-explicit
     packages:
@@ -485,6 +501,15 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/zipp-4.1.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zlib-ng-2.3.3-hceb46e0_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_6.conda
+      - pypi: https://files.pythonhosted.org/packages/98/df/0a1755e750013a2081e863e7cd37e0cdd02664372c754e5560099eb7aa44/cffi-2.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/76/56/6d6872f79d14c0cb02f1646cbb4592eef935857c0951a105874b7b62a0c3/contextlib2-21.6.0-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/95/38/0d29a6fd7d0d1373f0c0c88a04ba20e359b257753ac497564cd660fc1d55/cryptography-48.0.0-cp311-abi3-manylinux_2_28_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/74/bc/bd30b4f6625da927b09f810e64f2a29aea83731ba9641cbed1f828986cd5/django_ninja_extra-0.31.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/26/b3/cc46af94ed93537d0680fffe5ca80080a3e9a7f4996051625a04b611689f/django_ninja_jwt-5.4.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ae/8d/f1af3832f5e6eb13ba94ee809e72b8ecb5eef226d27ee0bef7d963d943c7/pydantic_settings-2.14.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/annotated-types-0.7.0-pyhd8ed1ab_1.conda
@@ -556,6 +581,15 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2025c-hc9c84f9_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/urllib3-2.7.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/zstd-1.5.7-h85ac4a6_6.conda
+      - pypi: https://files.pythonhosted.org/packages/d6/43/0e822876f87ea8a4ef95442c3d766a06a51fc5298823f884ef87aaad168c/cffi-2.0.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/76/56/6d6872f79d14c0cb02f1646cbb4592eef935857c0951a105874b7b62a0c3/contextlib2-21.6.0-py2.py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/14/d5/e9c4ef932c8d800490c34d8bd589d64a31d5890e27ec9e9ad532be893294/cryptography-48.0.0-cp311-abi3-manylinux_2_28_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/74/bc/bd30b4f6625da927b09f810e64f2a29aea83731ba9641cbed1f828986cd5/django_ninja_extra-0.31.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/26/b3/cc46af94ed93537d0680fffe5ca80080a3e9a7f4996051625a04b611689f/django_ninja_jwt-5.4.4-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/ae/8d/f1af3832f5e6eb13ba94ee809e72b8ecb5eef226d27ee0bef7d963d943c7/pydantic_settings-2.14.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_libgcc_mutex-0.1-conda_forge.tar.bz2
   sha256: fe51de6107f9edc7aa4f786a70f4a883943bc9d39b3bb7307c04c41410990726
@@ -1051,6 +1085,20 @@ packages:
   license: ISC
   size: 134201
   timestamp: 1779285131141
+- pypi: https://files.pythonhosted.org/packages/98/df/0a1755e750013a2081e863e7cd37e0cdd02664372c754e5560099eb7aa44/cffi-2.0.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+  name: cffi
+  version: 2.0.0
+  sha256: c8d3b5532fc71b7a77c09192b4a5a200ea992702734a2e9279a37f2478236f26
+  requires_dist:
+  - pycparser ; implementation_name != 'PyPy'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/d6/43/0e822876f87ea8a4ef95442c3d766a06a51fc5298823f884ef87aaad168c/cffi-2.0.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl
+  name: cffi
+  version: 2.0.0
+  sha256: 24b6f81f1983e6df8db3adc38562c83f7d4a0c36162885ec7f7b77c7dcbec97b
+  requires_dist:
+  - pycparser ; implementation_name != 'PyPy'
+  requires_python: '>=3.9'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/cffi-2.0.0-py313hf01b4d8_0.conda
   sha256: cbead764b88c986642578bb39f77d234fbc3890bd301ed29f849a6d3898ed0fc
   md5: 062317cc1cd26fbf6454e86ddd3622c4
@@ -1147,6 +1195,11 @@ packages:
   license_family: BSD
   size: 27011
   timestamp: 1733218222191
+- pypi: https://files.pythonhosted.org/packages/76/56/6d6872f79d14c0cb02f1646cbb4592eef935857c0951a105874b7b62a0c3/contextlib2-21.6.0-py2.py3-none-any.whl
+  name: contextlib2
+  version: 21.6.0
+  sha256: 3fbdb64466afd23abaf6c977627b75b6139a5a3e8ce38405c5b413aed7a0471f
+  requires_python: '>=3.6'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.3.3-py313h7037e92_3.conda
   sha256: c545751fd48f119f2c28635514e6aa6ae784d9a1d4eb0e10be16c776e961f333
   md5: 6186382cb34a9953bf2a18fc763dc346
@@ -1209,6 +1262,24 @@ packages:
   license_family: APACHE
   size: 415533
   timestamp: 1779839078882
+- pypi: https://files.pythonhosted.org/packages/14/d5/e9c4ef932c8d800490c34d8bd589d64a31d5890e27ec9e9ad532be893294/cryptography-48.0.0-cp311-abi3-manylinux_2_28_aarch64.whl
+  name: cryptography
+  version: 48.0.0
+  sha256: 40ba1f85eaa6959837b1d51c9767e230e14612eea4ef110ee8854ada22da1bf5
+  requires_dist:
+  - cffi>=2.0.0 ; platform_python_implementation != 'PyPy'
+  - typing-extensions>=4.13.2 ; python_full_version < '3.11'
+  - bcrypt>=3.1.5 ; extra == 'ssh'
+  requires_python: '>=3.9,!=3.9.0,!=3.9.1'
+- pypi: https://files.pythonhosted.org/packages/95/38/0d29a6fd7d0d1373f0c0c88a04ba20e359b257753ac497564cd660fc1d55/cryptography-48.0.0-cp311-abi3-manylinux_2_28_x86_64.whl
+  name: cryptography
+  version: 48.0.0
+  sha256: a0e692c683f4df67815a2d258b324e66f4738bd7a96a218c826dce4f4bd05d8f
+  requires_dist:
+  - cffi>=2.0.0 ; platform_python_implementation != 'PyPy'
+  - typing-extensions>=4.13.2 ; python_full_version < '3.11'
+  - bcrypt>=3.1.5 ; extra == 'ssh'
+  requires_python: '>=3.9,!=3.9.0,!=3.9.1'
 - conda: https://conda.anaconda.org/conda-forge/noarch/cycler-0.12.1-pyhcf101f3_2.conda
   sha256: bb47aec5338695ff8efbddbc669064a3b10fe34ad881fb8ad5d64fbfa6910ed1
   md5: 4c2a8fef270f6c69591889b93f9f55c1
@@ -1449,6 +1520,51 @@ packages:
   license_family: MIT
   size: 2080637
   timestamp: 1774303247196
+- pypi: https://files.pythonhosted.org/packages/91/13/3fab25e603bc5d5f8fabe17ff455bcd03cb0583023713262a62b35333d41/django_ninja_extra-0.30.1-py3-none-any.whl
+  name: django-ninja-extra
+  version: 0.30.1
+  sha256: 286241bd1a14b3257114014ec349f2a992f42dab76bfdf678d55029130ad7fbd
+  requires_dist:
+  - django>=2.2
+  - django-ninja==1.4.3
+  - injector>=0.19.0
+  - asgiref
+  - contextlib2
+  requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/74/bc/bd30b4f6625da927b09f810e64f2a29aea83731ba9641cbed1f828986cd5/django_ninja_extra-0.31.4-py3-none-any.whl
+  name: django-ninja-extra
+  version: 0.31.4
+  sha256: fb40879364808344e16b690990bbd669dccd0a0f4a2844294bf07ec3eb1b5375
+  requires_dist:
+  - django>=2.2
+  - django-ninja>=1.6.0
+  - injector>=0.19.0
+  - asgiref
+  - contextlib2
+  requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/0d/ac/24260402a7336a148909ad8827780c57ffa651e3930d9c1502222213095b/django_ninja_jwt-5.4.0-py3-none-any.whl
+  name: django-ninja-jwt
+  version: 5.4.0
+  sha256: 2de0c7e0122bf22a5425a1ce19a7fbaefcad96aae55bb6485c3b5e23c516d7b3
+  requires_dist:
+  - django>=2.1
+  - pyjwt>=1.7.1,<3
+  - pyjwt[crypto]
+  - django-ninja-extra>=0.22.9
+  - cryptography>=3.3.1 ; extra == 'crypto'
+  requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/26/b3/cc46af94ed93537d0680fffe5ca80080a3e9a7f4996051625a04b611689f/django_ninja_jwt-5.4.4-py3-none-any.whl
+  name: django-ninja-jwt
+  version: 5.4.4
+  sha256: cc27b86542b4255fa21af0dc652aea15b59066ad5f46296f0c6faa193c5e5924
+  requires_dist:
+  - django>=2.1
+  - pyjwt>=1.7.1,<3
+  - pyjwt[crypto]
+  - pydantic-settings>=2.0.0
+  - django-ninja-extra>=0.30.5
+  - cryptography>=3.3.1 ; extra == 'crypto'
+  requires_python: '>=3.7'
 - conda: https://conda.anaconda.org/conda-forge/linux-64/epics-base-7.0.9.0-pl5321h2669dad_11.conda
   sha256: cf2654684f14bd08fb29323a5ee6e38404e218fcf105f147310673927cc3cd6a
   md5: c04b9ed22ba34ff5eb6c799dc25ca02f
@@ -2086,6 +2202,32 @@ packages:
   license_family: MIT
   size: 13387
   timestamp: 1760831448842
+- pypi: https://files.pythonhosted.org/packages/5f/db/953aeee405f1466832f212f61496ee07c29f7f027f7591b71b06bd08a418/injector-0.24.0-py3-none-any.whl
+  name: injector
+  version: 0.24.0
+  sha256: 47294c7a7fdb811f0d1b442a1e0152bb2fc28b2ccaaba4cba44e5e125e0da2d0
+  requires_dist:
+  - typing-extensions>=3.7.4 ; python_full_version < '3.9'
+  - black==24.3.0 ; implementation_name == 'cpython' and extra == 'dev'
+  - build==1.0.3 ; extra == 'dev'
+  - check-manifest==0.49 ; extra == 'dev'
+  - click==8.1.7 ; extra == 'dev'
+  - coverage[toml]==7.3.2 ; extra == 'dev'
+  - exceptiongroup==1.2.0 ; extra == 'dev'
+  - importlib-metadata==7.0.0 ; extra == 'dev'
+  - iniconfig==2.0.0 ; extra == 'dev'
+  - mypy==1.7.1 ; implementation_name == 'cpython' and extra == 'dev'
+  - mypy-extensions==1.0.0 ; extra == 'dev'
+  - packaging==25.0 ; extra == 'dev'
+  - pathspec==0.12.1 ; extra == 'dev'
+  - platformdirs==4.1.0 ; extra == 'dev'
+  - pluggy==1.3.0 ; extra == 'dev'
+  - pyproject-hooks==1.0.0 ; extra == 'dev'
+  - pytest==7.4.3 ; extra == 'dev'
+  - pytest-cov==4.1.0 ; extra == 'dev'
+  - tomli==2.0.1 ; extra == 'dev'
+  - typing-extensions==4.9.0 ; python_full_version < '3.9' and extra == 'dev'
+  - zipp==3.19.1 ; extra == 'dev'
 - conda: https://conda.anaconda.org/conda-forge/noarch/jmespath-1.0.1-pyhd8ed1ab_1.conda
   sha256: 3d2f20ee7fd731e3ff55c189db9c43231bc8bde957875817a609c227bcb295c6
   md5: 972bdca8f30147135f951847b30399ea
@@ -4257,6 +4399,11 @@ packages:
   license_family: MIT
   size: 8252
   timestamp: 1726802366959
+- pypi: https://files.pythonhosted.org/packages/0c/c3/44f3fbbfa403ea2a7c779186dc20772604442dde72947e7d01069cbe98e3/pycparser-3.0-py3-none-any.whl
+  name: pycparser
+  version: '3.0'
+  sha256: b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/noarch/pycparser-2.22-pyh29332c3_1.conda
   sha256: 79db7928d13fab2d892592223d7570f5061c192f27b9febd1a418427b719acc6
   md5: 12c566707c80111f9799308d9e265aef
@@ -4361,6 +4508,22 @@ packages:
   license_family: MIT
   size: 1780773
   timestamp: 1778084251775
+- pypi: https://files.pythonhosted.org/packages/ae/8d/f1af3832f5e6eb13ba94ee809e72b8ecb5eef226d27ee0bef7d963d943c7/pydantic_settings-2.14.1-py3-none-any.whl
+  name: pydantic-settings
+  version: 2.14.1
+  sha256: 6e3c7edfd8277687cdc598f56e5cff0e9bfff0910a3749deaa8d4401c3a2b9de
+  requires_dist:
+  - pydantic>=2.7.0
+  - python-dotenv>=0.21.0
+  - typing-inspection>=0.4.0
+  - boto3>=1.35.0 ; extra == 'aws-secrets-manager'
+  - types-boto3[secretsmanager] ; extra == 'aws-secrets-manager'
+  - azure-identity>=1.16.0 ; extra == 'azure-key-vault'
+  - azure-keyvault-secrets>=4.8.0 ; extra == 'azure-key-vault'
+  - google-cloud-secret-manager>=2.23.1 ; extra == 'gcp-secret-manager'
+  - tomli>=2.0.1 ; extra == 'toml'
+  - pyyaml>=6.0.1 ; extra == 'yaml'
+  requires_python: '>=3.10'
 - conda: https://conda.anaconda.org/conda-forge/noarch/pydotplus-2.0.2-pyhd8ed1ab_7.conda
   sha256: e6681723a8383bf4caaadde22a595289748c6ff909ecbd01c36fbc3b168f41e0
   md5: 26e4ff85fd62f32f1818b57363995bc6
@@ -4409,6 +4572,14 @@ packages:
   license_family: BSD
   size: 893031
   timestamp: 1774796815820
+- pypi: https://files.pythonhosted.org/packages/a3/5e/ecf12fdb62546d64385c158514e9b2b671f7832108ef2ecd2020ce0af2d1/pyjwt-2.13.0-py3-none-any.whl
+  name: pyjwt
+  version: 2.13.0
+  sha256: 66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728
+  requires_dist:
+  - typing-extensions>=4.0 ; python_full_version < '3.11'
+  - cryptography>=3.4.0 ; extra == 'crypto'
+  requires_python: '>=3.9'
 - conda: https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.2.5-pyhcf101f3_0.conda
   sha256: 6814b61b94e95ffc45ec539a6424d8447895fef75b0fec7e1be31f5beee883fb
   md5: 6c8979be6d7a17692793114fa26916e8

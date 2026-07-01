@@ -5,14 +5,24 @@ from guardian.shortcuts import get_objects_for_user
 from ninja import ModelSchema, Router, Schema
 from ninja.errors import AuthorizationError
 from ninja.security import django_auth
+from buoy_retriever.auth import JWTAuthCreateUser
 
 from pipelines.api import pipeline_api_key_auth
 from pipelines.models import Pipeline
 
 from .models import Dataset, DatasetConfig
 
-dataset_router = Router(auth=django_auth)
-config_router = Router(auth=django_auth)
+DJANGO_OR_JWT_AUTH = (
+    django_auth,
+    JWTAuthCreateUser(),
+)
+PIPELINE_OR_JWT_AUTH = (
+    pipeline_api_key_auth,
+    JWTAuthCreateUser(),
+)
+
+dataset_router = Router(auth=DJANGO_OR_JWT_AUTH)
+config_router = Router(auth=DJANGO_OR_JWT_AUTH)
 
 
 class DatasetCompactSchema(ModelSchema):
@@ -129,7 +139,7 @@ def get_dataset(request: HttpRequest, slug: str):
 @dataset_router.get(
     "/by-pipeline/{pipeline_slug}/",
     response=list[DatasetSchema],
-    auth=pipeline_api_key_auth,
+    auth=PIPELINE_OR_JWT_AUTH,
 )
 def get_datasets_by_pipeline(request: HttpRequest, pipeline_slug: str):
     """Get all datasets for a specific pipeline"""
@@ -173,7 +183,7 @@ def post_config(request: HttpRequest, id: int, payload: DatasetConfigPostSchema)
 @config_router.get(
     "by-pipeline/{pipeline_slug}/",
     response=list[DatasetWithConfigSchema],
-    auth=pipeline_api_key_auth,
+    auth=PIPELINE_OR_JWT_AUTH,
 )
 def get_configs_by_pipeline(request: HttpRequest, pipeline_slug: str):
     """Get all active published or testing dataset configs for a specific pipeline"""

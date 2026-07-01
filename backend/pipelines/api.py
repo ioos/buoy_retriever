@@ -2,6 +2,7 @@ from django.http import HttpRequest
 from django.shortcuts import get_object_or_404
 from ninja import ModelSchema, Router
 from ninja.security import APIKeyHeader, django_auth
+from buoy_retriever.auth import JWTAuthCreateUser
 
 from .models import Pipeline, PipelineApiKey
 
@@ -22,6 +23,12 @@ class PipelineApiKeyAuth(APIKeyHeader):
 
 
 pipeline_api_key_auth = PipelineApiKeyAuth()
+
+PIPELINE_DJANGO_OR_JWT_AUTH = (
+    pipeline_api_key_auth,
+    django_auth,
+    JWTAuthCreateUser(),
+)
 
 
 class PipelineSchema(ModelSchema):
@@ -48,7 +55,7 @@ class PipelinePostSchema(ModelSchema):
 @router.get(
     "/",
     response=list[PipelineSchema],
-    auth=[pipeline_api_key_auth, django_auth],
+    auth=PIPELINE_DJANGO_OR_JWT_AUTH,
 )
 def list_pipelines(request: HttpRequest):
     """List all pipelines"""
@@ -75,7 +82,7 @@ def create_update_pipeline(request: HttpRequest, payload: PipelinePostSchema):
 @router.get(
     "/{id}/",
     response=PipelineSchema,
-    auth=[pipeline_api_key_auth, django_auth],
+    auth=PIPELINE_DJANGO_OR_JWT_AUTH,
 )
 def get_pipeline_by_id(request: HttpRequest, id: int):
     """Get a specific pipeline by ID"""
