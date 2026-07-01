@@ -97,7 +97,10 @@ INSTALLED_APPS = [
 
 # PostgREST-compatible endpoints (see the ninja_postgrest app).
 NINJA_POSTGREST = {
-    "DEFAULT_AUTH": ["ninja.security.django_auth", "pipelines.api.PipelineApiKeyAuth"],
+    "DEFAULT_AUTH": [
+        "ninja.security.django_auth",
+        "pipelines.api.pipeline_api_key_auth",
+    ],
     "DEFAULT_PERMISSIONS": "guardian",
     "MAX_LIMIT": 1000,
     "TABLES": {
