@@ -48,7 +48,7 @@ django = ">=5.2.6,<6"
 django-ninja = ">=1.4.3,<2"
 psycopg = ">=3.2.9,<4"
 django-cors-headers = ">=4.9.0,<5"
-django-health-check = ">=3.20.0,<4"
+django-health-check = ">=3.21.0,<4"
 sentry-sdk = ">=2.43.0,<3"
 django-guardian = ">=3.0.0,<4"
 

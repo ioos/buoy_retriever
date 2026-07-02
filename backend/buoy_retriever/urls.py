@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from health_check.views import HealthCheckView
 
 from .api import api
 
@@ -25,6 +26,22 @@ prefix = "backend/"
 urlpatterns = [
     path(f"{prefix}admin/", admin.site.urls),
     path(f"{prefix}api/", api.urls),
-    path(f"{prefix}health/", include("health_check.urls")),  # health check endpoints
+    path(
+        f"{prefix}health/",
+        HealthCheckView.as_view(
+            checks=[
+                # "health_check.Cache",
+                "health_check.Database",
+                # "health_check.Mail",
+                # "health_check.Storage",
+                # 3rd party checks
+                # "health_check.contrib.psutil.Disk",
+                # "health_check.contrib.psutil.Memory",
+                # "health_check.contrib.celery.Ping",
+                # "health_check.contrib.rabbitmq.RabbitMQ",
+                # "health_check.contrib.redis.Redis",
+            ],
+        ),
+    ),  # health check endpoints
     path(prefix, include("django.contrib.auth.urls")),
 ]
