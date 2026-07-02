@@ -65,10 +65,15 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
 
 ## Standard parity (larger scope)
 
-- [ ] **F-7 — Error codes.** Emit PostgREST-compatible `code` values (e.g.
+- [x] **F-7 — Error codes.** Emit PostgREST-compatible `code` values (e.g.
   `PGRST116` for no/multiple rows on singular) instead of the custom `PGRST-4xx`
   strings, so clients keying on `err.code` behave as they would against
   PostgREST.
+  Resolved: targeted subset applied — `PGRST-406`→`PGRST116` (singular
+  no/multiple-rows) and `PGRST-100`→`PGRST100` (query-parse), both with HTTP
+  statuses unchanged. The remaining `PGRST-400`/`PGRST-403`/`PGRST-404` codes
+  are kept as-is and documented in `Conformance.md` as app-specific markers
+  with no exact PostgREST equivalent.
 
 - [ ] **F-8 — Write-response parity.** Set a `Location` header on insert, and
   honour the singular `application/vnd.pgrst.object+json` media type on

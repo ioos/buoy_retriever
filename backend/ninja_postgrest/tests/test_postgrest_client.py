@@ -250,7 +250,7 @@ def test_client_single_multiple_rows_raises_apierror(live_server, seeded, admin)
     with pytest.raises(APIError) as excinfo:
         pg.from_("datasets").select("slug").single().execute()
     err = excinfo.value
-    assert err.code == "PGRST-406"
+    assert err.code == "PGRST116"
     assert "exactly one row" in err.message
 
 

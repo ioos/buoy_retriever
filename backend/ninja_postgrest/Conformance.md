@@ -58,12 +58,16 @@ for the open work behind the deviations below.
 
 ### Errors
 - JSON error body shape `{message, details, hint, code}`.
+- Singular response with 0 or >1 rows returns `code: "PGRST116"` (status 406),
+  matching real PostgREST.
+- Query-string / operator parse errors return `code: "PGRST100"` (status 400),
+  matching real PostgREST.
 
 ## Deviates
 
 | Area | PostgREST | This app | Tracking |
 |------|-----------|----------|----------|
-| Error `code` values | Codes like `PGRST116` (no/multiple rows), and pass-through Postgres `SQLSTATE`s | Custom codes (`PGRST-400`, `PGRST-406`, ...). A client keying on `err.code` will not see real PostgREST codes | [F-7](./Findings.md) |
+| Error `code` values | Real codes (`PGRST116`, `PGRST100`, ...) and pass-through Postgres `SQLSTATE`s | `PGRST116` (singular no/multiple rows) and `PGRST100` (query-parse) now match PostgREST exactly. Remaining hyphenated `PGRST-4xx` codes are app-specific markers with no exact PostgREST equivalent (PostgREST would surface a Postgres `SQLSTATE` or a `PGRST2xx` there): `PGRST-400` (not-filterable/not-writable column, bad embed, invalid body, unknown `on_conflict`/`columns`), `PGRST-403` (permission denied), `PGRST-404` (unknown table) | [F-7](./Findings.md) |
 | Insert `Location` header | Returns a `Location` header for created rows | Not set | [F-8](./Findings.md) |
 | Singular `Accept` on writes | `PATCH`/`DELETE` honour the singular media type | `PATCH`/`DELETE` always return an array | [F-8](./Findings.md) |
 | JSON-path filtering | `config->>x=eq.y` filters on JSON paths | Rejected with 400; JSON paths work in `select` only | README v1 limitation |

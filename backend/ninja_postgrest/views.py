@@ -89,7 +89,7 @@ def _single_object_or_406(rows: list) -> Any:
             "JSON object requested, but query did not return exactly one row",
             status=406,
             details=f"Results contain {len(rows)} rows",
-            code="PGRST-406",
+            code="PGRST116",
         )
     return rows[0]
 

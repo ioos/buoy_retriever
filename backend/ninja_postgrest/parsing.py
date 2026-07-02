@@ -194,7 +194,7 @@ def parse_order(value: str) -> list[OrderTerm]:
             else:
                 raise PostgrestError(
                     f"Invalid order token {token!r} in {item!r}",
-                    code="PGRST-100",
+                    code="PGRST100",
                 )
         terms.append(OrderTerm(column=column, descending=descending, nulls=nulls))
     return terms
@@ -266,7 +266,7 @@ def _parse_condition(cond: str, table=None) -> Q:
 
     column, _, token = cond.partition(".")
     if not token:
-        raise PostgrestError(f"Malformed condition {cond!r}", code="PGRST-100")
+        raise PostgrestError(f"Malformed condition {cond!r}", code="PGRST100")
     if table is not None:
         base = _base_column(column)
         if base not in table.filterable:
@@ -376,5 +376,5 @@ def _int_param(value: str, name: str) -> int:
     except ValueError as exc:
         raise PostgrestError(
             f"{name} must be an integer, got {value!r}",
-            code="PGRST-100",
+            code="PGRST100",
         ) from exc

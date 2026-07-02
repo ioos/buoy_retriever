@@ -65,7 +65,7 @@ def _split_op(token: str) -> tuple[bool, str, str | None, str]:
     if not sep:
         raise PostgrestError(
             f"Malformed filter operator: {token!r}",
-            code="PGRST-100",
+            code="PGRST100",
             hint="Expected the form 'operator.value', e.g. 'eq.123'.",
         )
 
@@ -107,7 +107,7 @@ def _coerce_is_value(value: str) -> Any:
     if key not in mapping:
         raise PostgrestError(
             f"Invalid 'is' value: {value!r}",
-            code="PGRST-100",
+            code="PGRST100",
             hint="Use is.null, is.true, is.false or is.unknown.",
         )
     return mapping[key]
@@ -159,6 +159,6 @@ def _build_q_inner(column: str, op: str, modifier: str | None, value: str) -> Q:
 
     raise PostgrestError(
         f"Unknown operator {op!r}",
-        code="PGRST-100",
+        code="PGRST100",
         hint=f"Supported: {sorted(set(SIMPLE_LOOKUPS) | set(SET_LOOKUPS) | {'in', 'is', 'isdistinct'} | FTS_OPERATORS)}",
     )

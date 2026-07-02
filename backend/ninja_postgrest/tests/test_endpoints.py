@@ -516,6 +516,13 @@ def test_non_filterable_column_in_or_group_400(datasets, admin):
     assert "not filterable" in resp.json()["message"]
 
 
+def test_parse_error_uses_pgrst100(datasets, admin):
+    # "slug=eq" has no operator.value form -> malformed operator parse error.
+    resp = client_for(admin).get(f"{PG}/datasets?slug=eq")
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "PGRST100"
+
+
 # --------------------------------------------------------------------------- #
 # OpenAPI documentation
 # --------------------------------------------------------------------------- #
