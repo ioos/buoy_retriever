@@ -12,6 +12,7 @@ from django.test import Client
 
 postgrest = pytest.importorskip("postgrest")
 from postgrest import SyncPostgrestClient  # noqa: E402
+from postgrest.exceptions import APIError  # noqa: E402
 
 from datasets.models import Dataset, DatasetConfig  # noqa: E402
 from pipelines.models import Pipeline  # noqa: E402
@@ -116,3 +117,130 @@ def test_client_guardian_filtering(live_server, seeded):
     pg = pg_client(live_server, bob)
     res = pg.from_("datasets").select("slug").execute()
     assert res.data == []
+
+
+# --------------------------------------------------------------------------- #
+# Writes through the real client (insert / update / delete / upsert)
+# --------------------------------------------------------------------------- #
+def test_client_insert_single(live_server, seeded, admin):
+    pipeline = seeded
+    pg = pg_client(live_server, admin)
+    pg.from_("datasets").insert(
+        {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"},
+    ).execute()
+    # Verify the round-trip by reading the new row back through the client.
+    res = (
+        pg.from_("datasets").select("slug,state").eq("slug", "gamma").single().execute()
+    )
+    assert res.data == {"slug": "gamma", "state": "Active"}
+    assert Dataset.objects.filter(slug="gamma").exists()
+
+
+def test_client_insert_bulk(live_server, seeded, admin):
+    pipeline = seeded
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets")
+        .insert(
+            [
+                {"slug": "gamma", "pipeline_id": pipeline.id},
+                {"slug": "delta", "pipeline_id": pipeline.id},
+            ],
+        )
+        .execute()
+    )
+    assert {r["slug"] for r in res.data} == {"gamma", "delta"}
+    assert Dataset.objects.filter(slug__in=["gamma", "delta"]).count() == 2
+
+
+def test_client_update(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets").update({"state": "Disabled"}).eq("slug", "alpha").execute()
+    )
+    assert [r["state"] for r in res.data] == ["Disabled"]
+    assert Dataset.objects.get(slug="alpha").state == "Disabled"
+
+
+def test_client_delete(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").delete().eq("slug", "beta").execute()
+    assert [r["slug"] for r in res.data] == ["beta"]
+    assert not Dataset.objects.filter(slug="beta").exists()
+    assert Dataset.objects.filter(slug="alpha").exists()
+
+
+def test_client_upsert_new_row(live_server, seeded, admin):
+    # Upsert of a *new* row behaves like an insert; the server ignores the
+    # ``Prefer: resolution`` header. Conflict-resolution (updating an existing
+    # row on a unique-key clash) is not implemented server-side, so this only
+    # exercises the no-conflict path.
+    pipeline = seeded
+    pg = pg_client(live_server, admin)
+    pg.from_("datasets").upsert(
+        {"slug": "epsilon", "pipeline_id": pipeline.id},
+    ).execute()
+    assert Dataset.objects.filter(slug="epsilon").exists()
+
+
+# --------------------------------------------------------------------------- #
+# Filter grammar as emitted by the client
+# --------------------------------------------------------------------------- #
+def test_client_like(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").like("slug", "al*").execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+
+
+def test_client_ilike_case_insensitive(live_server, seeded, admin):
+    # An upper-case pattern still matches the lower-case slug.
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").ilike("slug", "*LPH*").execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+
+
+def test_client_range_comparison(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").gte("slug", "b").order("slug").execute()
+    assert [r["slug"] for r in res.data] == ["beta"]
+
+
+def test_client_or_filter(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets")
+        .select("slug")
+        .or_("slug.eq.alpha,slug.eq.beta")
+        .order("slug")
+        .execute()
+    )
+    assert [r["slug"] for r in res.data] == ["alpha", "beta"]
+
+
+def test_client_is_null(live_server, seeded, admin):
+    # No dataset has a null state, so is.null returns nothing — this exercises
+    # the ``is`` operator round-tripping through the client and the endpoint.
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").is_("state", "null").execute()
+    assert res.data == []
+
+
+# --------------------------------------------------------------------------- #
+# Error contract: PostgREST JSON error shape as parsed by the client
+# --------------------------------------------------------------------------- #
+def test_client_single_multiple_rows_raises_apierror(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    with pytest.raises(APIError) as excinfo:
+        pg.from_("datasets").select("slug").single().execute()
+    err = excinfo.value
+    assert err.code == "PGRST-406"
+    assert "exactly one row" in err.message
+
+
+def test_client_non_filterable_column_raises_apierror(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    with pytest.raises(APIError) as excinfo:
+        pg.from_("datasets").select("slug").eq("bogus", "1").execute()
+    err = excinfo.value
+    assert err.code == "PGRST-400"
+    assert "not filterable" in err.message
