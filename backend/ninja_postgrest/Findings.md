@@ -113,7 +113,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   (`POST /rpc/{fn}`), FK disambiguation (`relation!fk(...)`), JSON-path
   *filtering*, and forward-embed permission filtering.
 
-- [ ] **F-10 — `->>` does not cast to text in `select`.** Surfaced while
+- [x] **F-10 — `->>` does not cast to text in `select`.** Surfaced while
   writing F-6's JSON-path serialization tests: parsing records the `->` vs
   `->>` distinction (`SelectField.json_text`), but serialization never
   consults it — `_dig_json` returns the raw JSON value either way, so
@@ -123,3 +123,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   JSON text, `null` stays `NULL`), then update
   `test_client_json_path_serialization` to pin the text form. Documented in
   the Conformance Deviates table until then.
+  Resolved: added `_json_text` in `serialization.py`, applied in
+  `_serialize_field` when `node.json_text` is set — strings pass through
+  unchanged, `None` stays `None`, everything else (numbers, booleans,
+  objects, arrays) goes through `json.dumps`.

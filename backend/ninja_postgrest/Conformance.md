@@ -21,7 +21,8 @@ for the open work behind the deviations below.
 
 ### Selection & embedding
 - `select` projection: bare columns, `alias:col`, `col::cast` (cast is
-  informational), JSON paths `col->a->>b`.
+  informational), JSON paths `col->a->>b`. `->>` extracts as text (matching
+  PostgREST); `->` extracts the raw JSON value.
 - Resource embedding `relation(col,...)` with aliases and arbitrary nesting.
 - Forward FK/O2O embeds resolve to a single object (or `null`); reverse-FK/M2M
   embeds resolve to an array.
@@ -75,7 +76,6 @@ for the open work behind the deviations below.
 |------|-----------|----------|----------|
 | Error `code` values | Real codes (`PGRST116`, `PGRST100`, ...) and pass-through Postgres `SQLSTATE`s | `PGRST116` (singular no/multiple rows) and `PGRST100` (query-parse) now match PostgREST exactly. Remaining hyphenated `PGRST-4xx` codes are app-specific markers with no exact PostgREST equivalent (PostgREST would surface a Postgres `SQLSTATE` or a `PGRST2xx` there): `PGRST-400` (not-filterable/not-writable column, bad embed, invalid body, unknown `on_conflict`/`columns`), `PGRST-403` (permission denied), `PGRST-404` (unknown table) | [F-7](./Findings.md) |
 | JSON-path filtering | `config->>x=eq.y` filters on JSON paths | Rejected with 400; JSON paths work in `select` only | README v1 limitation |
-| `->>` text cast in `select` | `->>` returns the value as *text* (`"2"`) | The parsed `->`/`->>` distinction is not applied during serialization: both return the raw JSON value (`2`, `true`, objects) | [F-10](./Findings.md) |
 | Forward-embed permissions | — | Forward (FK/O2O) embeds of registered models are **not** permission-filtered; only reverse-FK/M2M embeds are (the parent row is already authorized) | README v1 limitation |
 | FK disambiguation | `relation!fk(...)` picks a specific FK | Not supported | README v1 limitation |
 | RPC | `POST /rpc/{fn}` | Not implemented | README v1 limitation |

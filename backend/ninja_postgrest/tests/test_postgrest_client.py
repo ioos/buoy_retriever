@@ -384,6 +384,8 @@ def test_client_json_path_serialization(live_server, seeded, admin):
         .single()
         .execute()
     )
-    # Characterizes current behavior: the raw JSON value (int). Real PostgREST
-    # casts ->> to text ("2") — divergence tracked as F-10 in Findings.md.
-    assert res.data == {"depth": 2}
+    # ->> extracts as text, matching PostgREST (F-10).
+    assert res.data == {"depth": "2"}
+    # -> (single arrow) extracts the raw JSON value.
+    res = pg.from_("dataset_configs").select("nested:config->nested").single().execute()
+    assert res.data == {"nested": {"depth": 2}}

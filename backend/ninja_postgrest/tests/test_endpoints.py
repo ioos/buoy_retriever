@@ -150,6 +150,24 @@ def test_select_cast_output_key(datasets, admin):
     assert rows[0] == {"slug": "alpha"}
 
 
+def test_json_path_text_extraction_edges(datasets, admin):
+    # ->> renders booleans as JSON text; null and missing keys stay null.
+    ds1, _ = datasets
+    DatasetConfig.objects.create(
+        dataset=ds1,
+        state=DatasetConfig.State.DRAFT,
+        config={"flag": True, "empty": None},
+    )
+    rows = (
+        client_for(admin)
+        .get(
+            f"{PG}/dataset_configs?select=flag:config->>flag,empty:config->>empty,nope:config->>nope",
+        )
+        .json()
+    )
+    assert rows == [{"flag": "true", "empty": None, "nope": None}]
+
+
 # --------------------------------------------------------------------------- #
 # Singular responses
 # --------------------------------------------------------------------------- #

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from django.core.exceptions import FieldDoesNotExist
@@ -39,10 +40,24 @@ def _dig_json(value: Any, path: list[str]) -> Any:
     return value
 
 
+def _json_text(value: Any) -> Any:
+    """Render a dug JSON value as PostgREST's ``->>`` does: text.
+
+    Strings pass through (no re-quoting), ``None`` stays ``None`` (SQL NULL),
+    and everything else (numbers, booleans, objects, arrays) becomes its JSON
+    text form.
+    """
+    if value is None or isinstance(value, str):
+        return value
+    return json.dumps(value)
+
+
 def _serialize_field(instance: Model, node: SelectField) -> tuple[str, Any]:
     value = getattr(instance, node.column, None)
     if node.json_path:
         value = _dig_json(value, node.json_path)
+        if node.json_text:
+            value = _json_text(value)
     else:
         # Resolve FK scalar id when selecting the relation field by name.
         try:
