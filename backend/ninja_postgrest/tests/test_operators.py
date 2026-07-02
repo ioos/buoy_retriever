@@ -41,3 +41,45 @@ def test_is_true():
 def test_isdistinct_is_null_safe():
     # IS DISTINCT FROM must return NULL rows too, unlike a bare ~exact.
     assert build_q("age", "isdistinct.5") == (~Q(age__exact="5") | Q(age__isnull=True))
+
+
+def test_match_and_imatch_are_regex():
+    assert build_q("slug", "match.^al") == Q(slug__regex="^al")
+    assert build_q("slug", "imatch.^AL") == Q(slug__iregex="^AL")
+
+
+def test_set_operators_parse_lists():
+    # PG array/range operators translate to the PG-specific lookups; SQLite
+    # cannot execute them, so coverage is at the Q-translation level.
+    assert build_q("tags", "cs.{a,b}") == Q(tags__contains=["a", "b"])
+    assert build_q("tags", "cd.{a,b}") == Q(tags__contained_by=["a", "b"])
+    assert build_q("tags", "ov.{a,b}") == Q(tags__overlap=["a", "b"])
+
+
+def test_fts_operators_build_search_queries():
+    from django.contrib.postgres.search import SearchQuery
+
+    assert build_q("description", "fts.cat") == Q(
+        description__search=SearchQuery("cat", config=None, search_type="plain"),
+    )
+    assert build_q("description", "plfts.cat") == Q(
+        description__search=SearchQuery("cat", config=None, search_type="plain"),
+    )
+    assert build_q("description", "phfts.fat cat") == Q(
+        description__search=SearchQuery("fat cat", config=None, search_type="phrase"),
+    )
+    assert build_q("description", "wfts.fat or cat") == Q(
+        description__search=SearchQuery(
+            "fat or cat",
+            config=None,
+            search_type="websearch",
+        ),
+    )
+
+
+def test_fts_config_modifier():
+    from django.contrib.postgres.search import SearchQuery
+
+    assert build_q("description", "fts(english).cat") == Q(
+        description__search=SearchQuery("cat", config="english", search_type="plain"),
+    )

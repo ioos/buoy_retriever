@@ -305,3 +305,85 @@ def test_client_delete_filtered_by_guardian(live_server, seeded, alice):
     assert [r["slug"] for r in res.data] == ["alpha"]
     assert not Dataset.objects.filter(slug="alpha").exists()
     assert Dataset.objects.filter(slug="beta").exists()
+
+
+# --------------------------------------------------------------------------- #
+# Coverage backfill (F-6): match/imatch, isdistinct, offset/range pagination,
+# nullsfirst/nullslast ordering, select alias, JSON-path serialization.
+# --------------------------------------------------------------------------- #
+def test_client_match_regex(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").filter("slug", "match", "^al").execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+
+
+def test_client_imatch_case_insensitive(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").filter("slug", "imatch", "^AL").execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+
+
+def test_client_isdistinct(live_server, seeded, admin):
+    # Non-NULL path end-to-end; NULL-safety is unit-tested (no registered
+    # table has a nullable filterable column).
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets")
+        .select("slug")
+        .filter("slug", "isdistinct", "alpha")
+        .execute()
+    )
+    assert [r["slug"] for r in res.data] == ["beta"]
+
+
+def test_client_offset(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").order("slug").limit(1).offset(1).execute()
+    assert [r["slug"] for r in res.data] == ["beta"]
+
+
+def test_client_range(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("slug").order("slug").range(0, 0).execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+
+
+def test_client_order_nulls_modifiers(live_server, seeded, admin):
+    # No orderable column is nullable, so this exercises the
+    # nullsfirst/nullslast grammar end-to-end (parse -> ORM -> SQL) rather
+    # than NULL placement.
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets")
+        .select("slug")
+        .order("slug", desc=True, nullsfirst=True)
+        .execute()
+    )
+    assert [r["slug"] for r in res.data] == ["beta", "alpha"]
+    res = pg.from_("datasets").select("slug").order("slug", nullsfirst=False).execute()
+    assert [r["slug"] for r in res.data] == ["alpha", "beta"]
+
+
+def test_client_select_alias(live_server, seeded, admin):
+    pg = pg_client(live_server, admin)
+    res = pg.from_("datasets").select("name:slug").order("slug").execute()
+    assert res.data[0] == {"name": "alpha"}
+
+
+def test_client_json_path_serialization(live_server, seeded, admin):
+    # config is a JSONField on dataset_configs; ->> renders via _dig_json.
+    cfg = DatasetConfig.objects.get()
+    cfg.config = {"units": "m", "nested": {"depth": 2}}
+    cfg.save()
+    pg = pg_client(live_server, admin)
+    res = pg.from_("dataset_configs").select("config->>units").single().execute()
+    assert res.data == {"units": "m"}
+    res = (
+        pg.from_("dataset_configs")
+        .select("depth:config->nested->>depth")
+        .single()
+        .execute()
+    )
+    # Characterizes current behavior: the raw JSON value (int). Real PostgREST
+    # casts ->> to text ("2") — divergence tracked as F-10 in Findings.md.
+    assert res.data == {"depth": 2}

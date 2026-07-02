@@ -10,6 +10,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.db import connection
 from django.test import Client, override_settings
 from guardian.shortcuts import assign_perm
 
@@ -129,6 +130,24 @@ def test_explicit_limit_overrides_default_limit(datasets, admin):
         finally:
             reset_global_config()
             reset_registry()
+
+
+def test_range_header_pagination(datasets, admin):
+    resp = client_for(admin).get(
+        f"{PG}/datasets?order=slug.asc",
+        headers={"Range": "0-0"},
+    )
+    assert resp.status_code == 200
+    assert [r["slug"] for r in resp.json()] == ["alpha"]
+    assert resp.headers["Content-Range"] == "0-0/*"
+
+
+def test_select_cast_output_key(datasets, admin):
+    # ::cast is informational; the output key stays the column name.
+    rows = (
+        client_for(admin).get(f"{PG}/datasets?select=slug::text&order=slug.asc").json()
+    )
+    assert rows[0] == {"slug": "alpha"}
 
 
 # --------------------------------------------------------------------------- #
@@ -501,6 +520,20 @@ def test_parse_error_uses_pgrst100(datasets, admin):
     resp = client_for(admin).get(f"{PG}/datasets?slug=eq")
     assert resp.status_code == 400
     assert resp.json()["code"] == "PGRST100"
+
+
+# --------------------------------------------------------------------------- #
+# PG-only operators (documented skip on the SQLite test backend)
+# --------------------------------------------------------------------------- #
+@pytest.mark.skipif(
+    connection.vendor != "postgresql",
+    reason="fts/plfts/phfts/wfts compile to to_tsvector @@ tsquery; PostgreSQL only",
+)
+def test_fts_requires_postgres(datasets, admin):
+    # Runs only against PostgreSQL; on the default SQLite test backend the
+    # FTS operators are covered at the Q-translation level in test_operators.
+    resp = client_for(admin).get(f"{PG}/pipelines?description=fts.pipeline")
+    assert resp.status_code == 200
 
 
 # --------------------------------------------------------------------------- #

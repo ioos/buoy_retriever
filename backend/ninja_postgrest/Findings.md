@@ -61,7 +61,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   their existing `test_postgrest_client.py` counterparts, and
   `test_client_select_and_order` was extended to cover `desc` ordering.
 
-- [ ] **F-6 — Fill operator/feature coverage holes.** No tests currently cover:
+- [x] **F-6 — Fill operator/feature coverage holes.** No tests currently cover:
   `match`/`imatch`, `isdistinct` (hides F-1), array/range ops `cs`/`cd`/`ov`,
   the FTS family `fts`/`plfts`/`phfts`/`wfts`; nor `Range`-header pagination,
   `offset`, `nullsfirst`/`nullslast` ordering, JSON-path *serialization*
@@ -70,6 +70,22 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   `postgrest` client (`.match`, `.contains`, `.text_search`, `.range`) so they
   are verified against real client output. PG-only operators need a PostgreSQL
   backend or a documented skip.
+  Resolved: split by what SQLite can execute. `match`/`imatch`,
+  `isdistinct` (non-NULL path), `offset`, `Range`-header pagination (via
+  `.range`/`.offset`, which emit `limit`/`offset` query params on this
+  `postgrest` client version rather than a `Range` header), `nullsfirst`/
+  `nullslast` ordering grammar, `select` alias and `::cast` output keys, and
+  JSON-path serialization (`config->>units`, aliased nested digs) are all
+  covered end-to-end through the real client (`test_postgrest_client.py`) and
+  raw URLs (`test_endpoints.py`). `cs`/`cd`/`ov` and the FTS family
+  (`fts`/`plfts`/`phfts`/`wfts`, incl. the `fts(config)` modifier) get
+  grammar-level `Q`-shape unit tests in `test_operators.py` only, since no
+  registered model has an ArrayField (cs/cd/ov) and SQLite has no
+  `to_tsvector`/`@@` support (FTS). FTS additionally gets one documented
+  `skipif(connection.vendor != "postgresql")` endpoint test in
+  `test_endpoints.py` that will run if the suite is ever pointed at
+  PostgreSQL; `cs`/`cd`/`ov` get no endpoint test even under skipif, since a
+  PG run would still fail with no ArrayField model to exercise.
 
 ## Standard parity (larger scope)
 
@@ -96,3 +112,14 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
 - [ ] **F-9 — Documented v1 gaps** (from README "Known limitations"): RPC
   (`POST /rpc/{fn}`), FK disambiguation (`relation!fk(...)`), JSON-path
   *filtering*, and forward-embed permission filtering.
+
+- [ ] **F-10 — `->>` does not cast to text in `select`.** Surfaced while
+  writing F-6's JSON-path serialization tests: parsing records the `->` vs
+  `->>` distinction (`SelectField.json_text`), but serialization never
+  consults it — `_dig_json` returns the raw JSON value either way, so
+  `select=depth:config->nested->>depth` yields `2` (int) where PostgREST
+  returns `"2"` (text). Fix would be to coerce in `_serialize_field` when
+  `json_text` is set (PostgREST semantics: strings unquoted, other values as
+  JSON text, `null` stays `NULL`), then update
+  `test_client_json_path_serialization` to pin the text form. Documented in
+  the Conformance Deviates table until then.
