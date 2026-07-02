@@ -243,6 +243,23 @@ def test_create_single_object_accept(pipeline, admin):
     assert resp.json()["slug"] == "gamma"
 
 
+def test_create_bulk_singular_406_rolls_back(pipeline, admin):
+    # A bulk insert with the singular media type cannot return one object;
+    # the 406 must roll the whole insert back (PostgREST rolls back the request).
+    body = [
+        {"slug": "gamma", "pipeline_id": pipeline.id},
+        {"slug": "delta", "pipeline_id": pipeline.id},
+    ]
+    resp = client_for(admin).post(
+        f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 406
+    assert not Dataset.objects.filter(slug__in=["gamma", "delta"]).exists()
+
+
 def test_delete(datasets, admin):
     # The client's test_client_delete always requests a representation; this
     # raw test is the only assertion of the 204 no-representation path and the
@@ -383,6 +400,33 @@ def test_columns_accepts_quoted_tokens(pipeline, admin):
     )
     assert resp.status_code == 201
     assert Dataset.objects.filter(slug="zeta").exists()
+
+
+def test_columns_applies_to_upsert(datasets, admin):
+    # ?columns= filters upsert bodies too: "state" is not listed, so the
+    # merge does not apply it and alpha's state is unchanged.
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?on_conflict=slug&columns=slug",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.get(slug="alpha").state == "Active"
+
+
+def test_columns_dropping_on_conflict_key_400(datasets, admin):
+    # If ?columns= drops the on_conflict key from the body, the upsert cannot
+    # key the row and reports the missing conflict column.
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?on_conflict=slug&columns=state",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 400
 
 
 def test_upsert_merge_duplicates_updates(datasets, admin):

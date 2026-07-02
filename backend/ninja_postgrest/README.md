@@ -80,7 +80,7 @@ embedding — matching PostgREST conventions.
 | Verb | Behaviour |
 |------|-----------|
 | `GET /pg/{t}` | List. Supports `select`, horizontal filters, `order`, `limit`/`offset` (and `Range`). `Accept: application/vnd.pgrst.object+json` returns a single object (406 unless exactly one row). `Prefer: count=exact` adds the exact total to `Content-Range`. |
-| `POST /pg/{t}` | Insert one object or an array; the response is always an array (201), unless the singular media type is requested. `Prefer: return=representation` returns the created rows. Sets a `Location` header (PK filter of the created row(s)). Upserts via `Prefer: resolution=…` + `?on_conflict=…` (see below). `?columns=col[,col2]` restricts which body keys are inserted (see below). |
+| `POST /pg/{t}` | Insert one object or an array; the response is always an array (201), unless the singular media type is requested. `Prefer: return=representation` returns the created rows; if the singular media type is also requested, a bulk insert 406s and the whole insert rolls back. Sets a `Location` header (PK filter of the created row(s)). Upserts via `Prefer: resolution=…` + `?on_conflict=…` (see below). `?columns=col[,col2]` restricts which body keys are inserted (see below). |
 | `PATCH /pg/{t}` | Update rows matching the filters with the JSON body. Returns rows with `Prefer: return=representation`; when a representation is requested, honours the singular media type, returning 406 unless exactly one row was updated (the update rolls back). |
 | `DELETE /pg/{t}` | Delete rows matching the filters. Returns rows with `Prefer: return=representation`; when a representation is requested, honours the singular media type, returning 406 unless exactly one row matched (nothing is deleted). |
 

@@ -47,9 +47,10 @@ for the open work behind the deviations below.
 - `Prefer: return=representation` returns affected rows on write.
 - Insert (`POST`) sets a `Location` header pointing at the created row(s) (a PK
   filter: `?id=eq.5`, or `?id=in.(1,2)` for a bulk insert).
-- `PATCH` / `DELETE` honour the singular media type when returning a
+- `POST` / `PATCH` / `DELETE` honour the singular media type when returning a
   representation: 406 (`PGRST116`) unless exactly one row is affected, and the
-  write does not take effect (rolled back / not deleted) on that 406.
+  write does not take effect (insert / update rolled back, or nothing deleted)
+  on that 406 — a bulk `POST` under the singular media type inserts nothing.
 
 ### Writes
 - `POST` insert of one object or an array.

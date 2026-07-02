@@ -290,6 +290,11 @@ def make_create_view(table: TableConfig) -> Callable:
                     obj.save()
                     created.append(obj)
 
+            # Singular representation must affect exactly one row; validate
+            # inside the tx so a 406 rolls the insert back.
+            if prefer.return_representation and wants_single_object(request):
+                _single_object_or_406(created)
+
         if not prefer.return_representation:
             resp = HttpResponse(status=201)
         else:
