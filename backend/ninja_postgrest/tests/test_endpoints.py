@@ -1,7 +1,7 @@
-"""Integration tests exercising the generated endpoints end-to-end.
-
-These run against the project's configured tables (``datasets`` /
-``dataset_configs``) so they cover the real django-ninja + guardian wiring.
+"""Integration tests for the raw HTTP surface: auth/permissions, status codes
+and headers, settings overrides, and behaviors the ``postgrest`` client
+library cannot express. The plain CRUD/filter matrix lives in
+``test_postgrest_client.py``.
 """
 
 import json
@@ -97,31 +97,6 @@ def test_fk_serialized_as_scalar_id(datasets, admin, pipeline):
 # --------------------------------------------------------------------------- #
 # Horizontal / vertical filtering, ordering, pagination
 # --------------------------------------------------------------------------- #
-def test_filter_eq(datasets, admin):
-    rows = client_for(admin).get(f"{PG}/datasets?slug=eq.beta").json()
-    assert {r["slug"] for r in rows} == {"beta"}
-
-
-def test_filter_in(datasets, admin):
-    rows = client_for(admin).get(f"{PG}/datasets?slug=in.(alpha,beta)").json()
-    assert {r["slug"] for r in rows} == {"alpha", "beta"}
-
-
-def test_select_projection(datasets, admin):
-    rows = client_for(admin).get(f"{PG}/datasets?select=slug").json()
-    assert all(set(r.keys()) == {"slug"} for r in rows)
-
-
-def test_order_desc(datasets, admin):
-    rows = client_for(admin).get(f"{PG}/datasets?select=slug&order=slug.desc").json()
-    assert [r["slug"] for r in rows] == ["beta", "alpha"]
-
-
-def test_limit(datasets, admin):
-    rows = client_for(admin).get(f"{PG}/datasets?order=slug.asc&limit=1").json()
-    assert [r["slug"] for r in rows] == ["alpha"]
-
-
 def test_content_range_header(datasets, admin):
     resp = client_for(admin).get(f"{PG}/datasets")
     assert resp.headers["Content-Range"] == "0-1/*"
@@ -156,24 +131,10 @@ def test_explicit_limit_overrides_default_limit(datasets, admin):
             reset_registry()
 
 
-def test_count_exact(datasets, admin):
-    resp = client_for(admin).get(f"{PG}/datasets", headers={"Prefer": "count=exact"})
-    assert resp.headers["Content-Range"] == "0-1/2"
-
-
 # --------------------------------------------------------------------------- #
 # Singular responses
 # --------------------------------------------------------------------------- #
 SINGULAR = "application/vnd.pgrst.object+json"
-
-
-def test_single_object(datasets, admin):
-    resp = client_for(admin).get(
-        f"{PG}/datasets?slug=eq.alpha",
-        headers={"Accept": SINGULAR},
-    )
-    assert resp.status_code == 200
-    assert resp.json()["slug"] == "alpha"
 
 
 def test_single_object_multiple_rows_406(datasets, admin):
@@ -184,36 +145,6 @@ def test_single_object_multiple_rows_406(datasets, admin):
 # --------------------------------------------------------------------------- #
 # Embedding
 # --------------------------------------------------------------------------- #
-def test_embed_reverse_fk(datasets, admin):
-    ds1, _ = datasets
-    DatasetConfig.objects.create(dataset=ds1, state=DatasetConfig.State.DRAFT)
-    rows = (
-        client_for(admin)
-        .get(
-            f"{PG}/datasets?slug=eq.alpha&select=slug,configs(state)",
-            headers={"Accept": SINGULAR},
-        )
-        .json()
-    )
-    assert rows["slug"] == "alpha"
-    assert rows["configs"] == [{"state": "Draft"}]
-
-
-def test_embed_forward_fk(datasets, admin):
-    # dataset_configs -> dataset is a forward FK to a registered table.
-    ds1, _ = datasets
-    DatasetConfig.objects.create(dataset=ds1, state=DatasetConfig.State.DRAFT)
-    rows = (
-        client_for(admin)
-        .get(
-            f"{PG}/dataset_configs?select=state,dataset(slug)",
-            headers={"Accept": SINGULAR},
-        )
-        .json()
-    )
-    assert rows["dataset"] == {"slug": "alpha"}
-
-
 def test_embed_unregistered_model_denied(datasets, admin):
     # 'pipeline' is listed as embeddable, but we simulate Pipeline not being a
     # registered table by removing it from TABLES for this test.
@@ -280,20 +211,6 @@ def test_embed_reverse_fk_visible_when_granted(datasets, alice):
 # --------------------------------------------------------------------------- #
 # Writes
 # --------------------------------------------------------------------------- #
-def test_create(pipeline, admin):
-    body = {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"}
-    resp = client_for(admin).post(
-        f"{PG}/datasets",
-        data=json.dumps(body),
-        content_type="application/json",
-        headers={"Prefer": "return=representation"},
-    )
-    assert resp.status_code == 201
-    # A single-object body still comes back as an array, matching PostgREST.
-    assert [r["slug"] for r in resp.json()] == ["gamma"]
-    assert Dataset.objects.filter(slug="gamma").exists()
-
-
 def test_create_single_object_accept(pipeline, admin):
     # The singular media type collapses the array to one object.
     body = {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"}
@@ -307,19 +224,10 @@ def test_create_single_object_accept(pipeline, admin):
     assert resp.json()["slug"] == "gamma"
 
 
-def test_update(datasets, admin):
-    resp = client_for(admin).patch(
-        f"{PG}/datasets?slug=eq.alpha",
-        data=json.dumps({"state": "Disabled"}),
-        content_type="application/json",
-        headers={"Prefer": "return=representation"},
-    )
-    assert resp.status_code == 200
-    assert resp.json()[0]["state"] == "Disabled"
-    assert Dataset.objects.get(slug="alpha").state == "Disabled"
-
-
 def test_delete(datasets, admin):
+    # The client's test_client_delete always requests a representation; this
+    # raw test is the only assertion of the 204 no-representation path and the
+    # literal status code (the client hides status codes).
     resp = client_for(admin).delete(f"{PG}/datasets?slug=eq.beta")
     assert resp.status_code == 204
     assert not Dataset.objects.filter(slug="beta").exists()

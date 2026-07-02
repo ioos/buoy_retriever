@@ -66,6 +66,11 @@ def test_client_select_and_order(live_server, seeded, admin):
     pg = pg_client(live_server, admin)
     res = pg.from_("datasets").select("slug").order("slug").execute()
     assert [r["slug"] for r in res.data] == ["alpha", "beta"]
+    # The projection is exact: no other columns leak into the rows.
+    assert all(set(r.keys()) == {"slug"} for r in res.data)
+    # Descending through the client's order grammar (order=slug.desc).
+    res = pg.from_("datasets").select("slug").order("slug", desc=True).execute()
+    assert [r["slug"] for r in res.data] == ["beta", "alpha"]
 
 
 def test_client_filter_eq(live_server, seeded, admin):

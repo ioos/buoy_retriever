@@ -44,7 +44,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
 
 ## Tests
 
-- [ ] **F-5 — Reduce duplication between `test_endpoints.py` and
+- [x] **F-5 — Reduce duplication between `test_endpoints.py` and
   `test_postgrest_client.py`.** The client suite re-covers plain CRUD/filter
   cases the raw-URL suite already asserts identically (`select`+`order`,
   `filter_eq`, `filter_in`, `limit`, `count_exact`, forward/reverse embed,
@@ -52,6 +52,14 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   on what only it can exercise — the wire grammar the `postgrest` library emits,
   session-cookie auth, `APIError` JSON-shape assertions, and guardian-filtered
   writes — and let `test_endpoints.py` own the plain CRUD/filter matrix.
+  Resolved: the resolution direction was inverted by decision — the client
+  suite (`test_postgrest_client.py`) owns the duplicated CRUD/filter cases
+  since it exercises the real wire grammar the `postgrest` library emits;
+  `test_endpoints.py` keeps only raw-only concerns (auth/status codes,
+  headers, settings overrides, and behaviors the client can't express). The
+  11 raw-URL duplicates were removed from `test_endpoints.py` in favor of
+  their existing `test_postgrest_client.py` counterparts, and
+  `test_client_select_and_order` was extended to cover `desc` ordering.
 
 - [ ] **F-6 — Fill operator/feature coverage holes.** No tests currently cover:
   `match`/`imatch`, `isdistinct` (hides F-1), array/range ops `cs`/`cd`/`ov`,
