@@ -36,3 +36,8 @@ def test_is_null():
 
 def test_is_true():
     assert build_q("active", "is.true") == Q(active__exact=True)
+
+
+def test_isdistinct_is_null_safe():
+    # IS DISTINCT FROM must return NULL rows too, unlike a bare ~exact.
+    assert build_q("age", "isdistinct.5") == (~Q(age__exact="5") | Q(age__isnull=True))

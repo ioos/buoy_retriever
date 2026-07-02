@@ -17,8 +17,7 @@ for the open work behind the deviations below.
   `not.or(...)`. Columns inside a group honour the same `filterable` allowlist as
   plain filters.
 - Operators: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `ilike`, `match`,
-  `imatch`, `in`, `is`, `cs`, `cd`, `ov`, `fts`/`plfts`/`phfts`/`wfts`.
-  (`isdistinct` is implemented but has a NULL bug — see Deviates.)
+  `imatch`, `in`, `is`, `isdistinct`, `cs`, `cd`, `ov`, `fts`/`plfts`/`phfts`/`wfts`.
 
 ### Selection & embedding
 - `select` projection: bare columns, `alias:col`, `col::cast` (cast is
@@ -59,7 +58,6 @@ for the open work behind the deviations below.
 
 | Area | PostgREST | This app | Tracking |
 |------|-----------|----------|----------|
-| `isdistinct` | `IS DISTINCT FROM` is NULL-safe (`NULL isdistinct 5` → true) | Compiled as `~Q(col__exact=v)`, which excludes `NULL` rows — a matching NULL row is dropped | [F-1](./Findings.md) |
 | Default page size | `db-max-rows` caps; a server may set a default limit | Only `MAX_LIMIT` (the cap) is honoured. `DEFAULT_LIMIT` is read from settings and documented but never applied, so there is no default page size below the cap | [F-2](./Findings.md) |
 | Error `code` values | Codes like `PGRST116` (no/multiple rows), and pass-through Postgres `SQLSTATE`s | Custom codes (`PGRST-400`, `PGRST-406`, ...). A client keying on `err.code` will not see real PostgREST codes | [F-7](./Findings.md) |
 | Insert `Location` header | Returns a `Location` header for created rows | Not set | [F-8](./Findings.md) |

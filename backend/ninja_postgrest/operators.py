@@ -139,8 +139,9 @@ def _build_q_inner(column: str, op: str, modifier: str | None, value: str) -> Q:
         return Q(**{f"{column}__exact": coerced})
 
     if op == "isdistinct":
-        # DISTINCT FROM: differs from the value, including across NULLs.
-        return ~Q(**{f"{column}__exact": value})
+        # IS DISTINCT FROM is NULL-safe: a NULL row is distinct from any
+        # non-null value, so include NULL rows that ~exact would drop.
+        return ~Q(**{f"{column}__exact": value}) | Q(**{f"{column}__isnull": True})
 
     if op in SET_LOOKUPS:
         return Q(**{f"{column}__{SET_LOOKUPS[op]}": _parse_list(value)})

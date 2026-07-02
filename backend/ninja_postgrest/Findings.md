@@ -8,7 +8,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
 
 ## Correctness
 
-- [ ] **F-1 — `isdistinct` drops NULL rows.** `operators.py` compiles
+- [x] **F-1 — `isdistinct` drops NULL rows.** `operators.py` compiles
   `isdistinct` as `~Q(col__exact=value)`, which (like Django's `.exclude()`)
   excludes rows where the column `IS NULL`. PostgREST's `IS DISTINCT FROM` is
   NULL-safe, so a NULL row is *distinct* from any non-null value and should be
