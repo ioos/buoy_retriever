@@ -125,14 +125,13 @@ def test_client_guardian_filtering(live_server, seeded):
 def test_client_insert_single(live_server, seeded, admin):
     pipeline = seeded
     pg = pg_client(live_server, admin)
-    pg.from_("datasets").insert(
-        {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"},
-    ).execute()
-    # Verify the round-trip by reading the new row back through the client.
     res = (
-        pg.from_("datasets").select("slug,state").eq("slug", "gamma").single().execute()
+        pg.from_("datasets")
+        .insert({"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"})
+        .execute()
     )
-    assert res.data == {"slug": "gamma", "state": "Active"}
+    # A single-object body still comes back as an array, matching PostgREST.
+    assert [r["slug"] for r in res.data] == ["gamma"]
     assert Dataset.objects.filter(slug="gamma").exists()
 
 

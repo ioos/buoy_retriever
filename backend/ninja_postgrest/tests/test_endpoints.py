@@ -259,8 +259,22 @@ def test_create(pipeline, admin):
         headers={"Prefer": "return=representation"},
     )
     assert resp.status_code == 201
-    assert resp.json()["slug"] == "gamma"
+    # A single-object body still comes back as an array, matching PostgREST.
+    assert [r["slug"] for r in resp.json()] == ["gamma"]
     assert Dataset.objects.filter(slug="gamma").exists()
+
+
+def test_create_single_object_accept(pipeline, admin):
+    # The singular media type collapses the array to one object.
+    body = {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Active"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["slug"] == "gamma"
 
 
 def test_update(datasets, admin):

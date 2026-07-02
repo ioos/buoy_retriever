@@ -77,6 +77,22 @@ def _apply_data(obj: Model, table: TableConfig, data: dict[str, Any]) -> None:
         setattr(obj, allowed[key], value)
 
 
+def _single_object_or_406(rows: list) -> Any:
+    """Return the sole row for a singular response, or raise 406.
+
+    Mirrors PostgREST: ``Accept: application/vnd.pgrst.object+json`` demands
+    exactly one row.
+    """
+    if len(rows) != 1:
+        raise PostgrestError(
+            "JSON object requested, but query did not return exactly one row",
+            status=406,
+            details=f"Results contain {len(rows)} rows",
+            code="PGRST-406",
+        )
+    return rows[0]
+
+
 # --------------------------------------------------------------------------- #
 # GET (list / single)
 # --------------------------------------------------------------------------- #
@@ -93,14 +109,7 @@ def make_list_view(table: TableConfig) -> Callable:
         rows = [serialize_instance(obj, table, parsed.select) for obj in page]
 
         if wants_single_object(request):
-            if len(rows) != 1:
-                raise PostgrestError(
-                    "JSON object requested, but query did not return exactly one row",
-                    status=406,
-                    details=f"Results contain {len(rows)} rows",
-                    code="PGRST-406",
-                )
-            return _json_response(rows[0])
+            return _json_response(_single_object_or_406(rows))
 
         resp = _json_response(rows)
         resp["Content-Range"] = content_range(parsed.offset, len(rows), total)
@@ -134,8 +143,12 @@ def make_create_view(table: TableConfig) -> Callable:
 
         if not prefer.return_representation:
             return HttpResponse(status=201)
+        # PostgREST returns an array whether one row or many were inserted; the
+        # singular media type (Accept) collapses it to one object.
         rows = [serialize_instance(obj, table, None) for obj in created]
-        return _json_response(rows if is_bulk else rows[0], status=201)
+        if wants_single_object(request):
+            return _json_response(_single_object_or_406(rows), status=201)
+        return _json_response(rows, status=201)
 
     view.__name__ = f"create_{table.name}"
     return view
