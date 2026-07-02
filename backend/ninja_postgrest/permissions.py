@@ -64,3 +64,24 @@ def require_create(user, table: TableConfig) -> None:
     perm = table.perm_codename("create")
     if not user.has_perm(perm):
         raise _deny("create", table)
+
+
+def require_change_object(user, table: TableConfig, obj) -> None:
+    """Raise unless the user may update this specific existing object.
+
+    Used by the upsert (``merge-duplicates``) path so a caller holding only the
+    model-level ``add`` permission cannot update rows it may not ``change``.
+    Mirrors :func:`filter_writable` for a single instance: object-level or
+    global ``change`` perm under ``guardian``, a plain perm under ``model``,
+    always allowed under ``open``.
+    """
+    mode = table.permissions
+    if mode == "open":
+        return
+    perm = table.perm_codename("update")
+    if mode == "guardian":
+        allowed = user.has_perm(perm) or user.has_perm(perm, obj)
+    else:
+        allowed = user.has_perm(perm)
+    if not allowed:
+        raise _deny("update", table)

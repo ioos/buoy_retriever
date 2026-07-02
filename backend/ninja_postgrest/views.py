@@ -16,7 +16,7 @@ from .conf import get_global_config
 from .exceptions import PostgrestError, postgrest_endpoint
 from .headers import content_range, parse_prefer, wants_single_object
 from .parsing import parse_request
-from .permissions import filter_writable, require_create
+from .permissions import filter_writable, require_change_object, require_create
 from .query import build_read_queryset, slice_queryset
 from .registry import TableConfig
 from .serialization import serialize_instance
@@ -121,6 +121,7 @@ def _conflict_attnames(request: HttpRequest, table: TableConfig) -> list[str]:
 
 
 def _upsert_rows(
+    user,
     table: TableConfig,
     items: list,
     conflict: list[str],
@@ -132,6 +133,10 @@ def _upsert_rows(
     columns; ``ignore-duplicates`` leaves an existing row untouched. Uses
     ``update_or_create`` / ``get_or_create`` so the behaviour is identical on
     every backend and real instances are returned for the representation.
+
+    Inserting is gated by ``require_create`` (the model-level ``add`` perm) at
+    the view; updating an existing row additionally requires ``change`` on that
+    row, so ``add``-only callers cannot mutate rows they may not change.
     """
     allowed = _writable_keys(table)
     manager = table.model._default_manager
@@ -160,6 +165,9 @@ def _upsert_rows(
         if ignore:
             obj, _ = manager.get_or_create(defaults=defaults, **lookup)
         else:
+            existing = manager.filter(**lookup).first()
+            if existing is not None:
+                require_change_object(user, table, existing)
             obj, _ = manager.update_or_create(defaults=defaults, **lookup)
         out.append(obj)
     return out
@@ -213,7 +221,13 @@ def make_create_view(table: TableConfig) -> Callable:
         created: list[Model] = []
         with transaction.atomic():
             if conflict:
-                created = _upsert_rows(table, items, conflict, prefer.resolution)
+                created = _upsert_rows(
+                    _user(request),
+                    table,
+                    items,
+                    conflict,
+                    prefer.resolution,
+                )
             else:
                 for data in items:
                     obj = table.model()

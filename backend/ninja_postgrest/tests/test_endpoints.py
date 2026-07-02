@@ -9,6 +9,7 @@ import json
 import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.test import Client, override_settings
 from guardian.shortcuts import assign_perm
 
@@ -340,6 +341,55 @@ def test_upsert_without_conflict_target_inserts(pipeline, admin):
     body = {"slug": "gamma", "pipeline_id": pipeline.id}
     resp = client_for(admin).post(
         f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.filter(slug="gamma").exists()
+
+
+def _grant_add_dataset(user):
+    user.user_permissions.add(Permission.objects.get(codename="add_dataset"))
+
+
+def test_upsert_merge_denied_without_change_perm(datasets, alice):
+    # alice may create datasets (model-level add) but has no change permission
+    # on the existing "alpha", so a merge that would update it is forbidden.
+    _grant_add_dataset(alice)
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(alice).post(
+        f"{PG}/datasets?on_conflict=slug",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 403
+    assert Dataset.objects.get(slug="alpha").state == "Active"  # unchanged
+
+
+def test_upsert_merge_allowed_with_change_perm(datasets, alice):
+    # Granting object-level change on "alpha" lets the merge update it.
+    ds1, _ = datasets
+    _grant_add_dataset(alice)
+    ds1.assign_edit_permission(alice)  # view + change on alpha
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(alice).post(
+        f"{PG}/datasets?on_conflict=slug",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.get(slug="alpha").state == "Disabled"
+
+
+def test_upsert_merge_inserts_new_row_with_add_perm(pipeline, alice):
+    # A brand-new row is an insert, so the model-level add perm alone suffices.
+    _grant_add_dataset(alice)
+    body = {"slug": "gamma", "pipeline_id": pipeline.id}
+    resp = client_for(alice).post(
+        f"{PG}/datasets?on_conflict=slug",
         data=json.dumps(body),
         content_type="application/json",
         headers={"Prefer": "resolution=merge-duplicates"},
