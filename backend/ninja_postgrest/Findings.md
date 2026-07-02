@@ -15,7 +15,7 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   returned. Fix: `~Q(col__exact=value) | Q(col__isnull=True)`. Add a test with a
   NULL-valued column. (`neq` is fine as-is — `<>` also excludes NULLs.)
 
-- [ ] **F-2 — `DEFAULT_LIMIT` is loaded but never applied.**
+- [x] **F-2 — `DEFAULT_LIMIT` is loaded but never applied.**
   `conf.py` reads `default_limit` and it appears in the README config example,
   but `query.slice_queryset` only consults `max_limit`. Either wire
   `default_limit` in as the effective page size when the request specifies no

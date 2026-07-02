@@ -40,6 +40,8 @@ NINJA_POSTGREST = {
 
     # Hard cap on rows returned per request.
     "MAX_LIMIT": 1000,
+    # Default page size used when a request gives no `limit`/`Range` (still
+    # capped by MAX_LIMIT). None means no default: fall back to MAX_LIMIT.
     "DEFAULT_LIMIT": None,
 
     "TABLES": {

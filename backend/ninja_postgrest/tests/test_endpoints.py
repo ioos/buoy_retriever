@@ -127,6 +127,35 @@ def test_content_range_header(datasets, admin):
     assert resp.headers["Content-Range"] == "0-1/*"
 
 
+def test_default_limit_applied_when_unspecified(datasets, admin):
+    # With DEFAULT_LIMIT=1 and no explicit limit, only one row is returned.
+    overridden = {**settings.NINJA_POSTGREST, "DEFAULT_LIMIT": 1}
+    with override_settings(NINJA_POSTGREST=overridden):
+        reset_global_config()
+        reset_registry()
+        try:
+            resp = client_for(admin).get(f"{PG}/datasets?order=slug.asc")
+            assert resp.status_code == 200
+            assert [r["slug"] for r in resp.json()] == ["alpha"]
+            assert resp.headers["Content-Range"] == "0-0/*"
+        finally:
+            reset_global_config()
+            reset_registry()
+
+
+def test_explicit_limit_overrides_default_limit(datasets, admin):
+    overridden = {**settings.NINJA_POSTGREST, "DEFAULT_LIMIT": 1}
+    with override_settings(NINJA_POSTGREST=overridden):
+        reset_global_config()
+        reset_registry()
+        try:
+            rows = client_for(admin).get(f"{PG}/datasets?order=slug.asc&limit=2").json()
+            assert [r["slug"] for r in rows] == ["alpha", "beta"]
+        finally:
+            reset_global_config()
+            reset_registry()
+
+
 def test_count_exact(datasets, admin):
     resp = client_for(admin).get(f"{PG}/datasets", headers={"Prefer": "count=exact"})
     assert resp.headers["Content-Range"] == "0-1/2"

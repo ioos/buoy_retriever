@@ -34,6 +34,8 @@ for the open work behind the deviations below.
 - `Range: 0-9` request header (query params take precedence).
 - `MAX_LIMIT` hard cap on rows returned per request (analogous to PostgREST's
   `db-max-rows`).
+- `DEFAULT_LIMIT` is the default page size applied when a request gives no
+  `limit`/`Range`, still bounded by `MAX_LIMIT`.
 
 ### Responses
 - `Content-Range` response header, including the empty-page `*/<total>` form.
@@ -58,7 +60,6 @@ for the open work behind the deviations below.
 
 | Area | PostgREST | This app | Tracking |
 |------|-----------|----------|----------|
-| Default page size | `db-max-rows` caps; a server may set a default limit | Only `MAX_LIMIT` (the cap) is honoured. `DEFAULT_LIMIT` is read from settings and documented but never applied, so there is no default page size below the cap | [F-2](./Findings.md) |
 | Error `code` values | Codes like `PGRST116` (no/multiple rows), and pass-through Postgres `SQLSTATE`s | Custom codes (`PGRST-400`, `PGRST-406`, ...). A client keying on `err.code` will not see real PostgREST codes | [F-7](./Findings.md) |
 | Insert `Location` header | Returns a `Location` header for created rows | Not set | [F-8](./Findings.md) |
 | Singular `Accept` on writes | `PATCH`/`DELETE` honour the singular media type | `PATCH`/`DELETE` always return an array | [F-8](./Findings.md) |

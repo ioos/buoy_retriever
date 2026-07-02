@@ -28,7 +28,11 @@ def slice_queryset(
     offset: int,
     limit: int | None,
     max_limit: int,
+    default_limit: int | None = None,
 ) -> QuerySet:
-    """Apply offset/limit honouring the configured ``MAX_LIMIT`` cap."""
+    """Apply offset/limit. When the request gave no limit, fall back to
+    ``default_limit`` (if configured); ``max_limit`` is always the hard cap."""
+    if limit is None:
+        limit = default_limit
     effective_limit = max_limit if limit is None else min(limit, max_limit)
     return qs[offset : offset + effective_limit]

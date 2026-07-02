@@ -185,7 +185,13 @@ def make_list_view(table: TableConfig) -> Callable:
         qs = build_read_queryset(table, parsed, _user(request))
 
         total = qs.count() if prefer.count == "exact" else None
-        page = slice_queryset(qs, parsed.offset, parsed.limit, gc.max_limit)
+        page = slice_queryset(
+            qs,
+            parsed.offset,
+            parsed.limit,
+            gc.max_limit,
+            gc.default_limit,
+        )
         rows = [serialize_instance(obj, table, parsed.select) for obj in page]
 
         if wants_single_object(request):
