@@ -6,6 +6,7 @@ import json
 from collections.abc import Callable
 from typing import Any
 
+from django.core.exceptions import FieldDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Model
@@ -93,6 +94,77 @@ def _single_object_or_406(rows: list) -> Any:
     return rows[0]
 
 
+def _column_attname(table: TableConfig, token: str) -> str:
+    """Resolve an ``on_conflict`` token (field name or column name) to an attname."""
+    try:
+        return table.model._meta.get_field(token).attname
+    except FieldDoesNotExist:
+        pass
+    for f in table.model._meta.get_fields():
+        if getattr(f, "attname", None) == token:
+            return token
+    raise PostgrestError(
+        f"Unknown on_conflict column {token!r} on table {table.name!r}",
+        status=400,
+        code="PGRST-400",
+    )
+
+
+def _conflict_attnames(request: HttpRequest, table: TableConfig) -> list[str]:
+    """The ``on_conflict`` columns as attnames, or ``[]`` when unspecified."""
+    raw = request.GET.get("on_conflict", "").strip()
+    if not raw:
+        return []
+    return [
+        _column_attname(table, tok.strip()) for tok in raw.split(",") if tok.strip()
+    ]
+
+
+def _upsert_rows(
+    table: TableConfig,
+    items: list,
+    conflict: list[str],
+    resolution: str,
+) -> list[Model]:
+    """Insert-or-update each row, keyed on the ``on_conflict`` columns.
+
+    ``merge-duplicates`` updates the conflicting row from the remaining body
+    columns; ``ignore-duplicates`` leaves an existing row untouched. Uses
+    ``update_or_create`` / ``get_or_create`` so the behaviour is identical on
+    every backend and real instances are returned for the representation.
+    """
+    allowed = _writable_keys(table)
+    manager = table.model._default_manager
+    ignore = resolution == "ignore-duplicates"
+    out: list[Model] = []
+    for data in items:
+        lookup: dict[str, Any] = {}
+        defaults: dict[str, Any] = {}
+        for key, value in data.items():
+            if key not in allowed:
+                raise PostgrestError(
+                    f"Column {key!r} is not writable on table {table.name!r}",
+                    status=400,
+                    code="PGRST-400",
+                    hint=f"Writable columns: {sorted(set(allowed))}",
+                )
+            target = lookup if allowed[key] in conflict else defaults
+            target[allowed[key]] = value
+        missing = [c for c in conflict if c not in lookup]
+        if missing:
+            raise PostgrestError(
+                f"on_conflict column(s) {missing} missing from row",
+                status=400,
+                code="PGRST-400",
+            )
+        if ignore:
+            obj, _ = manager.get_or_create(defaults=defaults, **lookup)
+        else:
+            obj, _ = manager.update_or_create(defaults=defaults, **lookup)
+        out.append(obj)
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # GET (list / single)
 # --------------------------------------------------------------------------- #
@@ -130,16 +202,24 @@ def make_create_view(table: TableConfig) -> Callable:
         payload = _load_body(request)
         is_bulk = isinstance(payload, list)
         items = payload if is_bulk else [payload]
+        for data in items:
+            if not isinstance(data, dict):
+                raise PostgrestError("Each row must be a JSON object", status=400)
 
+        # An upsert (Prefer: resolution=...) needs an on_conflict target to key
+        # on; without one it degrades to a plain insert, mirroring PostgREST
+        # when no conflict target can be inferred.
+        conflict = _conflict_attnames(request, table) if prefer.resolution else []
         created: list[Model] = []
         with transaction.atomic():
-            for data in items:
-                if not isinstance(data, dict):
-                    raise PostgrestError("Each row must be a JSON object", status=400)
-                obj = table.model()
-                _apply_data(obj, table, data)
-                obj.save()
-                created.append(obj)
+            if conflict:
+                created = _upsert_rows(table, items, conflict, prefer.resolution)
+            else:
+                for data in items:
+                    obj = table.model()
+                    _apply_data(obj, table, data)
+                    obj.save()
+                    created.append(obj)
 
         if not prefer.return_representation:
             return HttpResponse(status=201)

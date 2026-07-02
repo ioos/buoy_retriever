@@ -305,6 +305,49 @@ def test_create_rejects_non_writable_column(pipeline, admin):
     assert resp.status_code == 400
 
 
+def test_upsert_merge_duplicates_updates(datasets, admin):
+    # Upsert keyed on slug updates the existing "alpha" row instead of
+    # erroring on its unique constraint.
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?on_conflict=slug",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates,return=representation"},
+    )
+    assert resp.status_code == 201
+    assert [r["slug"] for r in resp.json()] == ["alpha"]
+    assert Dataset.objects.filter(slug="alpha").count() == 1
+    assert Dataset.objects.get(slug="alpha").state == "Disabled"
+
+
+def test_upsert_ignore_duplicates_keeps_existing(datasets, admin):
+    body = {"slug": "alpha", "state": "Disabled"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?on_conflict=slug",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=ignore-duplicates"},
+    )
+    assert resp.status_code == 201
+    # The existing row is left untouched.
+    assert Dataset.objects.filter(slug="alpha").count() == 1
+    assert Dataset.objects.get(slug="alpha").state == "Active"
+
+
+def test_upsert_without_conflict_target_inserts(pipeline, admin):
+    # No on_conflict target: an upsert degrades to a plain insert.
+    body = {"slug": "gamma", "pipeline_id": pipeline.id}
+    resp = client_for(admin).post(
+        f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "resolution=merge-duplicates"},
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.filter(slug="gamma").exists()
+
+
 # --------------------------------------------------------------------------- #
 # Errors
 # --------------------------------------------------------------------------- #

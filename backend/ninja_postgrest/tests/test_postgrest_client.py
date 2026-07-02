@@ -170,16 +170,27 @@ def test_client_delete(live_server, seeded, admin):
 
 
 def test_client_upsert_new_row(live_server, seeded, admin):
-    # Upsert of a *new* row behaves like an insert; the server ignores the
-    # ``Prefer: resolution`` header. Conflict-resolution (updating an existing
-    # row on a unique-key clash) is not implemented server-side, so this only
-    # exercises the no-conflict path.
+    # Without an on_conflict target an upsert degrades to a plain insert.
     pipeline = seeded
     pg = pg_client(live_server, admin)
     pg.from_("datasets").upsert(
         {"slug": "epsilon", "pipeline_id": pipeline.id},
     ).execute()
     assert Dataset.objects.filter(slug="epsilon").exists()
+
+
+def test_client_upsert_merge_on_conflict(live_server, seeded, admin):
+    # Upsert keyed on slug updates the existing "alpha" row rather than
+    # colliding with its unique slug.
+    pg = pg_client(live_server, admin)
+    res = (
+        pg.from_("datasets")
+        .upsert({"slug": "alpha", "state": "Disabled"}, on_conflict="slug")
+        .execute()
+    )
+    assert [r["slug"] for r in res.data] == ["alpha"]
+    assert Dataset.objects.filter(slug="alpha").count() == 1
+    assert Dataset.objects.get(slug="alpha").state == "Disabled"
 
 
 # --------------------------------------------------------------------------- #
