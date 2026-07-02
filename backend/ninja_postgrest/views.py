@@ -94,6 +94,24 @@ def _single_object_or_406(rows: list) -> Any:
     return rows[0]
 
 
+def _location(
+    request: HttpRequest,
+    table: TableConfig,
+    created: list[Model],
+) -> str | None:
+    """PostgREST-style Location header for created rows: the request path plus a
+    PK filter (``?id=eq.5`` for one row, ``?id=in.(1,2)`` for several)."""
+    if not created:
+        return None
+    col = table.pk
+    values = [getattr(obj, col) for obj in created]
+    if len(values) == 1:
+        filt = f"{col}=eq.{values[0]}"
+    else:
+        filt = f"{col}=in.({','.join(str(v) for v in values)})"
+    return f"{request.path}?{filt}"
+
+
 def _column_attname(table: TableConfig, token: str) -> str:
     """Resolve an ``on_conflict`` token (field name or column name) to an attname."""
     try:
@@ -273,13 +291,19 @@ def make_create_view(table: TableConfig) -> Callable:
                     created.append(obj)
 
         if not prefer.return_representation:
-            return HttpResponse(status=201)
-        # PostgREST returns an array whether one row or many were inserted; the
-        # singular media type (Accept) collapses it to one object.
-        rows = [serialize_instance(obj, table, None) for obj in created]
-        if wants_single_object(request):
-            return _json_response(_single_object_or_406(rows), status=201)
-        return _json_response(rows, status=201)
+            resp = HttpResponse(status=201)
+        else:
+            # PostgREST returns an array whether one row or many were inserted;
+            # the singular media type (Accept) collapses it to one object.
+            rows = [serialize_instance(obj, table, None) for obj in created]
+            if wants_single_object(request):
+                resp = _json_response(_single_object_or_406(rows), status=201)
+            else:
+                resp = _json_response(rows, status=201)
+        location = _location(request, table, created)
+        if location:
+            resp["Location"] = location
+        return resp
 
     view.__name__ = f"create_{table.name}"
     return view
@@ -306,10 +330,16 @@ def make_update_view(table: TableConfig) -> Callable:
                 _apply_data(obj, table, data)
                 obj.save()
                 updated.append(obj)
+            # Singular representation must affect exactly one row; validate
+            # inside the tx so a 406 rolls the update back.
+            if prefer.return_representation and wants_single_object(request):
+                _single_object_or_406(updated)
 
         if not prefer.return_representation:
             return HttpResponse(status=204)
         rows = [serialize_instance(obj, table, parsed.select) for obj in updated]
+        if wants_single_object(request):
+            return _json_response(rows[0])
         return _json_response(rows)
 
     view.__name__ = f"update_{table.name}"
@@ -330,11 +360,16 @@ def make_delete_view(table: TableConfig) -> Callable:
 
         rows = None
         if prefer.return_representation:
-            rows = [serialize_instance(obj, table, parsed.select) for obj in qs]
+            objs = list(qs)
+            if wants_single_object(request):
+                _single_object_or_406(objs)  # 406 unless exactly one, before delete
+            rows = [serialize_instance(obj, table, parsed.select) for obj in objs]
         qs.delete()
 
         if rows is None:
             return HttpResponse(status=204)
+        if wants_single_object(request):
+            return _json_response(rows[0])
         return _json_response(rows)
 
     view.__name__ = f"delete_{table.name}"

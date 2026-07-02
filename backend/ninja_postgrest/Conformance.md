@@ -45,6 +45,11 @@ for the open work behind the deviations below.
 - Single-object insert returns an array (collapsed to one object only under the
   singular media type).
 - `Prefer: return=representation` returns affected rows on write.
+- Insert (`POST`) sets a `Location` header pointing at the created row(s) (a PK
+  filter: `?id=eq.5`, or `?id=in.(1,2)` for a bulk insert).
+- `PATCH` / `DELETE` honour the singular media type when returning a
+  representation: 406 (`PGRST116`) unless exactly one row is affected, and the
+  write does not take effect (rolled back / not deleted) on that 406.
 
 ### Writes
 - `POST` insert of one object or an array.
@@ -68,8 +73,6 @@ for the open work behind the deviations below.
 | Area | PostgREST | This app | Tracking |
 |------|-----------|----------|----------|
 | Error `code` values | Real codes (`PGRST116`, `PGRST100`, ...) and pass-through Postgres `SQLSTATE`s | `PGRST116` (singular no/multiple rows) and `PGRST100` (query-parse) now match PostgREST exactly. Remaining hyphenated `PGRST-4xx` codes are app-specific markers with no exact PostgREST equivalent (PostgREST would surface a Postgres `SQLSTATE` or a `PGRST2xx` there): `PGRST-400` (not-filterable/not-writable column, bad embed, invalid body, unknown `on_conflict`/`columns`), `PGRST-403` (permission denied), `PGRST-404` (unknown table) | [F-7](./Findings.md) |
-| Insert `Location` header | Returns a `Location` header for created rows | Not set | [F-8](./Findings.md) |
-| Singular `Accept` on writes | `PATCH`/`DELETE` honour the singular media type | `PATCH`/`DELETE` always return an array | [F-8](./Findings.md) |
 | JSON-path filtering | `config->>x=eq.y` filters on JSON paths | Rejected with 400; JSON paths work in `select` only | README v1 limitation |
 | Forward-embed permissions | — | Forward (FK/O2O) embeds of registered models are **not** permission-filtered; only reverse-FK/M2M embeds are (the parent row is already authorized) | README v1 limitation |
 | FK disambiguation | `relation!fk(...)` picks a specific FK | Not supported | README v1 limitation |

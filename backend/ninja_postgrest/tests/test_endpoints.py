@@ -325,6 +325,78 @@ def test_delete(datasets, admin):
     assert not Dataset.objects.filter(slug="beta").exists()
 
 
+def test_create_sets_location_header(pipeline, admin):
+    body = {"slug": "gamma", "pipeline_id": pipeline.id}
+    resp = client_for(admin).post(
+        f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    obj = Dataset.objects.get(slug="gamma")
+    assert resp.headers["Location"] == f"{PG}/datasets?id=eq.{obj.id}"
+
+
+def test_create_bulk_location_uses_in_filter(pipeline, admin):
+    body = [
+        {"slug": "gamma", "pipeline_id": pipeline.id},
+        {"slug": "delta", "pipeline_id": pipeline.id},
+    ]
+    resp = client_for(admin).post(
+        f"{PG}/datasets",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    g = Dataset.objects.get(slug="gamma").id
+    d = Dataset.objects.get(slug="delta").id
+    assert resp.headers["Location"] == f"{PG}/datasets?id=in.({g},{d})"
+
+
+def test_patch_single_object_accept(datasets, admin):
+    resp = client_for(admin).patch(
+        f"{PG}/datasets?slug=eq.alpha",
+        data=json.dumps({"state": "Disabled"}),
+        content_type="application/json",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["slug"] == "alpha"  # a single object, not an array
+
+
+def test_patch_singular_multiple_rows_406_rolls_back(datasets, admin):
+    # No filter matches both alpha and beta; singular + representation -> 406,
+    # and the update must roll back (both rows unchanged).
+    resp = client_for(admin).patch(
+        f"{PG}/datasets",
+        data=json.dumps({"state": "Disabled"}),
+        content_type="application/json",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 406
+    assert Dataset.objects.get(slug="alpha").state == "Active"
+    assert Dataset.objects.get(slug="beta").state == "Active"
+
+
+def test_delete_single_object_accept(datasets, admin):
+    resp = client_for(admin).delete(
+        f"{PG}/datasets?slug=eq.beta",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["slug"] == "beta"  # a single object, not an array
+    assert not Dataset.objects.filter(slug="beta").exists()
+
+
+def test_delete_singular_multiple_rows_406_no_delete(datasets, admin):
+    resp = client_for(admin).delete(
+        f"{PG}/datasets",
+        headers={"Prefer": "return=representation", "Accept": SINGULAR},
+    )
+    assert resp.status_code == 406
+    assert Dataset.objects.count() == 2  # nothing deleted
+
+
 def test_create_rejects_non_writable_column(pipeline, admin):
     body = {"slug": "delta", "pipeline_id": pipeline.id, "id": 999}
     resp = client_for(admin).post(

@@ -75,9 +75,15 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   are kept as-is and documented in `Conformance.md` as app-specific markers
   with no exact PostgREST equivalent.
 
-- [ ] **F-8 — Write-response parity.** Set a `Location` header on insert, and
+- [x] **F-8 — Write-response parity.** Set a `Location` header on insert, and
   honour the singular `application/vnd.pgrst.object+json` media type on
   `PATCH`/`DELETE` (currently they always return an array).
+  Resolved: `POST` sets `Location` to the request path plus a PK filter
+  (`?id=eq.5`, or `?id=in.(1,2)` for a bulk insert) on every 201. `PATCH`/
+  `DELETE` honour the singular media type when returning a representation:
+  406 (`PGRST116`) unless exactly one row is affected, validated before the
+  write takes effect (inside the update transaction so it rolls back; before
+  `qs.delete()` for delete) so the mutation does not happen on a 406.
 
 - [ ] **F-9 — Documented v1 gaps** (from README "Known limitations"): RPC
   (`POST /rpc/{fn}`), FK disambiguation (`relation!fk(...)`), JSON-path
