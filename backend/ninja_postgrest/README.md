@@ -80,7 +80,7 @@ embedding — matching PostgREST conventions.
 | Verb | Behaviour |
 |------|-----------|
 | `GET /pg/{t}` | List. Supports `select`, horizontal filters, `order`, `limit`/`offset` (and `Range`). `Accept: application/vnd.pgrst.object+json` returns a single object (406 unless exactly one row). `Prefer: count=exact` adds the exact total to `Content-Range`. |
-| `POST /pg/{t}` | Insert one object or an array; the response is always an array (201), unless the singular media type is requested. `Prefer: return=representation` returns the created rows. Upserts via `Prefer: resolution=…` + `?on_conflict=…` (see below). |
+| `POST /pg/{t}` | Insert one object or an array; the response is always an array (201), unless the singular media type is requested. `Prefer: return=representation` returns the created rows. Upserts via `Prefer: resolution=…` + `?on_conflict=…` (see below). `?columns=col[,col2]` restricts which body keys are inserted (see below). |
 | `PATCH /pg/{t}` | Update rows matching the filters with the JSON body. Returns rows with `Prefer: return=representation`. |
 | `DELETE /pg/{t}` | Delete rows matching the filters. Returns rows with `Prefer: return=representation`. |
 
@@ -121,6 +121,14 @@ Without an `on_conflict` target the request degrades to a plain insert (matching
 PostgREST when no conflict target can be inferred). Inserting a new row requires
 the model-level `add` permission; updating a conflicting row additionally
 requires `change` on that row.
+
+### `columns` (insert column restriction)
+
+`POST ...?columns=col[,col2]` restricts which body keys are considered on
+insert: keys not listed are ignored (dropped, or defaulted for unlisted
+values) rather than rejected. This applies to both plain inserts and upserts.
+A listed column must still be `writable`; an unknown/non-writable column in
+`columns` is a 400.
 
 ## Permissions
 

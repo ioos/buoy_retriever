@@ -52,6 +52,9 @@ for the open work behind the deviations below.
 - Upsert via `Prefer: resolution=merge-duplicates` / `ignore-duplicates` plus
   `?on_conflict=col[,col2]`; without an `on_conflict` target the request
   degrades to a plain insert.
+- `?columns=col[,col2]` restricts the insert column set (`POST` only): body
+  keys not listed are ignored (dropped/defaulted) rather than rejected, for
+  both plain inserts and upserts.
 
 ### Errors
 - JSON error body shape `{message, details, hint, code}`.
@@ -63,7 +66,6 @@ for the open work behind the deviations below.
 | Error `code` values | Codes like `PGRST116` (no/multiple rows), and pass-through Postgres `SQLSTATE`s | Custom codes (`PGRST-400`, `PGRST-406`, ...). A client keying on `err.code` will not see real PostgREST codes | [F-7](./Findings.md) |
 | Insert `Location` header | Returns a `Location` header for created rows | Not set | [F-8](./Findings.md) |
 | Singular `Accept` on writes | `PATCH`/`DELETE` honour the singular media type | `PATCH`/`DELETE` always return an array | [F-8](./Findings.md) |
-| `columns` param | Restricts the columns considered on insert | Reserved but unimplemented — `?columns=` is silently ignored | [F-4](./Findings.md) |
 | JSON-path filtering | `config->>x=eq.y` filters on JSON paths | Rejected with 400; JSON paths work in `select` only | README v1 limitation |
 | Forward-embed permissions | — | Forward (FK/O2O) embeds of registered models are **not** permission-filtered; only reverse-FK/M2M embeds are (the parent row is already authorized) | README v1 limitation |
 | FK disambiguation | `relation!fk(...)` picks a specific FK | Not supported | README v1 limitation |

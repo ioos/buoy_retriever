@@ -120,6 +120,33 @@ def _conflict_attnames(request: HttpRequest, table: TableConfig) -> list[str]:
     ]
 
 
+def _insert_columns(request: HttpRequest, table: TableConfig) -> set[str] | None:
+    """Parse ``?columns=a,b`` into the set of body keys to keep on insert.
+
+    Returns ``None`` when unspecified (no restriction). Each listed column must
+    be a writable key; an unknown/non-writable column is a 400 (you cannot
+    insert a column you may not write).
+    """
+    raw = request.GET.get("columns", "").strip()
+    if not raw:
+        return None
+    allowed = _writable_keys(table)
+    cols: set[str] = set()
+    for tok in raw.split(","):
+        tok = tok.strip().strip("'\"")
+        if not tok:
+            continue
+        if tok not in allowed:
+            raise PostgrestError(
+                f"Column {tok!r} in 'columns' is not writable on table {table.name!r}",
+                status=400,
+                code="PGRST-400",
+                hint=f"Writable columns: {sorted(set(allowed))}",
+            )
+        cols.add(tok)
+    return cols
+
+
 def _upsert_rows(
     user,
     table: TableConfig,
@@ -219,6 +246,10 @@ def make_create_view(table: TableConfig) -> Callable:
         for data in items:
             if not isinstance(data, dict):
                 raise PostgrestError("Each row must be a JSON object", status=400)
+
+        columns = _insert_columns(request, table)
+        if columns is not None:
+            items = [{k: v for k, v in data.items() if k in columns} for data in items]
 
         # An upsert (Prefer: resolution=...) needs an on_conflict target to key
         # on; without one it degrades to a plain insert, mirroring PostgREST

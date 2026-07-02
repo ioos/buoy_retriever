@@ -33,10 +33,14 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
   since generated views return `HttpResponse` directly). `reset_schema_cache`
   is called from `reset_registry()`. `JsonBody` (no call sites) was removed.
 
-- [ ] **F-4 — `columns` reserved param is a no-op.** `parsing.RESERVED_PARAMS`
+- [x] **F-4 — `columns` reserved param is a no-op.** `parsing.RESERVED_PARAMS`
   reserves `columns` but nothing implements PostgREST's insert column
   restriction, so `?columns=` is silently ignored. Implement it or drop it from
   the reserved set and note the gap.
+  Resolved: `views.py` filters `items` to the `?columns=` set (a listed column
+  must be writable, else 400) right after the body is parsed, before the
+  upsert/plain-insert branch, so both paths honour it. `POST` only, per
+  PostgREST semantics.
 
 ## Tests
 

@@ -335,6 +335,57 @@ def test_create_rejects_non_writable_column(pipeline, admin):
     assert resp.status_code == 400
 
 
+def test_columns_ignores_extra_nonwritable_key(pipeline, admin):
+    # Without ?columns=, a non-writable "id" key is a 400 (see
+    # test_create_rejects_non_writable_column). With ?columns=slug,pipeline_id
+    # the extra "id" key is dropped instead of rejected.
+    body = {"slug": "delta", "pipeline_id": pipeline.id, "id": 999}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?columns=slug,pipeline_id",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.filter(slug="delta").exists()
+
+
+def test_columns_ignores_unlisted_values(pipeline, admin):
+    # A value sent for a column NOT in ?columns= is ignored: state falls back to
+    # its model default ("Active") rather than the "Disabled" we sent.
+    body = {"slug": "gamma", "pipeline_id": pipeline.id, "state": "Disabled"}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?columns=slug,pipeline_id",
+        data=json.dumps(body),
+        content_type="application/json",
+        headers={"Prefer": "return=representation"},
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.get(slug="gamma").state == "Active"
+
+
+def test_columns_unknown_column_400(pipeline, admin):
+    body = {"slug": "gamma", "pipeline_id": pipeline.id}
+    resp = client_for(admin).post(
+        f"{PG}/datasets?columns=bogus",
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+
+
+def test_columns_accepts_quoted_tokens(pipeline, admin):
+    # Real PostgREST clients send quoted identifiers, e.g. columns="slug","pipeline_id".
+    # The quoted form must behave identically to the unquoted form (extra "id" dropped).
+    body = {"slug": "zeta", "pipeline_id": pipeline.id, "id": 999}
+    resp = client_for(admin).post(
+        f'{PG}/datasets?columns="slug","pipeline_id"',
+        data=json.dumps(body),
+        content_type="application/json",
+    )
+    assert resp.status_code == 201
+    assert Dataset.objects.filter(slug="zeta").exists()
+
+
 def test_upsert_merge_duplicates_updates(datasets, admin):
     # Upsert keyed on slug updates the existing "alpha" row instead of
     # erroring on its unique constraint.
