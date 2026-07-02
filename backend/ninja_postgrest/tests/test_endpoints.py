@@ -399,6 +399,23 @@ def test_upsert_merge_inserts_new_row_with_add_perm(pipeline, alice):
 
 
 # --------------------------------------------------------------------------- #
+# Write authorization
+# --------------------------------------------------------------------------- #
+# Guardian filtering of PATCH/DELETE for non-superusers is covered end-to-end
+# through the real client in test_postgrest_client.py. Here we only assert the
+# auth layer applies to writes, which the (always-authenticated) client cannot.
+def test_anonymous_write_unauthorized(datasets):
+    # Writes inherit DEFAULT_AUTH, so an unauthenticated PATCH is rejected.
+    resp = Client().patch(
+        f"{PG}/datasets?slug=eq.alpha",
+        data=json.dumps({"state": "Disabled"}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 401
+    assert Dataset.objects.get(slug="alpha").state == "Active"
+
+
+# --------------------------------------------------------------------------- #
 # Errors
 # --------------------------------------------------------------------------- #
 def test_unknown_table_404(admin):

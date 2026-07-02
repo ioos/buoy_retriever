@@ -14,6 +14,8 @@ postgrest = pytest.importorskip("postgrest")
 from postgrest import SyncPostgrestClient  # noqa: E402
 from postgrest.exceptions import APIError  # noqa: E402
 
+from guardian.shortcuts import assign_perm  # noqa: E402
+
 from datasets.models import Dataset, DatasetConfig  # noqa: E402
 from pipelines.models import Pipeline  # noqa: E402
 
@@ -40,6 +42,11 @@ def seeded():
 @pytest.fixture
 def admin():
     return User.objects.create_superuser("admin", password="pw")  # noqa: S106
+
+
+@pytest.fixture
+def alice():
+    return User.objects.create_user("alice", password="pw")  # noqa: S106
 
 
 def pg_client(live_server, user) -> SyncPostgrestClient:
@@ -254,3 +261,42 @@ def test_client_non_filterable_column_raises_apierror(live_server, seeded, admin
     err = excinfo.value
     assert err.code == "PGRST-400"
     assert "not filterable" in err.message
+
+
+# --------------------------------------------------------------------------- #
+# Write authorization through the client (guardian filtering on update/delete)
+# --------------------------------------------------------------------------- #
+def test_client_update_filtered_by_guardian(live_server, seeded, alice):
+    # alice may change alpha but not beta; an update matching both touches only
+    # the row she can change.
+    Dataset.objects.get(slug="alpha").assign_edit_permission(alice)
+    pg = pg_client(live_server, alice)
+    res = (
+        pg.from_("datasets")
+        .update({"state": "Disabled"})
+        .eq("state", "Active")
+        .execute()
+    )
+    assert [r["slug"] for r in res.data] == ["alpha"]
+    assert Dataset.objects.get(slug="alpha").state == "Disabled"
+    assert Dataset.objects.get(slug="beta").state == "Active"
+
+
+def test_client_update_without_perm_is_noop(live_server, seeded, alice):
+    pg = pg_client(live_server, alice)
+    res = (
+        pg.from_("datasets").update({"state": "Disabled"}).eq("slug", "alpha").execute()
+    )
+    assert res.data == []
+    assert Dataset.objects.get(slug="alpha").state == "Active"
+
+
+def test_client_delete_filtered_by_guardian(live_server, seeded, alice):
+    # alice may delete alpha but not beta; a delete matching both removes only
+    # the row she can delete.
+    assign_perm("datasets.delete_dataset", alice, Dataset.objects.get(slug="alpha"))
+    pg = pg_client(live_server, alice)
+    res = pg.from_("datasets").delete().in_("slug", ["alpha", "beta"]).execute()
+    assert [r["slug"] for r in res.data] == ["alpha"]
+    assert not Dataset.objects.filter(slug="alpha").exists()
+    assert Dataset.objects.filter(slug="beta").exists()
