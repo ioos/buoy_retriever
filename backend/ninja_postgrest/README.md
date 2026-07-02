@@ -78,7 +78,7 @@ embedding — matching PostgREST conventions.
 | Verb | Behaviour |
 |------|-----------|
 | `GET /pg/{t}` | List. Supports `select`, horizontal filters, `order`, `limit`/`offset` (and `Range`). `Accept: application/vnd.pgrst.object+json` returns a single object (406 unless exactly one row). `Prefer: count=exact` adds the exact total to `Content-Range`. |
-| `POST /pg/{t}` | Insert one object or an array. `Prefer: return=representation` returns the created rows (201). |
+| `POST /pg/{t}` | Insert one object or an array; the response is always an array (201), unless the singular media type is requested. `Prefer: return=representation` returns the created rows. Upserts via `Prefer: resolution=…` + `?on_conflict=…` (see below). |
 | `PATCH /pg/{t}` | Update rows matching the filters with the JSON body. Returns rows with `Prefer: return=representation`. |
 | `DELETE /pg/{t}` | Delete rows matching the filters. Returns rows with `Prefer: return=representation`. |
 
@@ -89,6 +89,10 @@ embedding — matching PostgREST conventions.
 
 `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `like`, `ilike`, `match`, `imatch`,
 `in`, `is`, `isdistinct`, `cs`, `cd`, `ov`, `fts`/`plfts`/`phfts`/`wfts`.
+
+Columns referenced inside `or=(…)` / `and=(…)` groups must be `filterable`,
+exactly like plain filters — a logical group cannot reach a column that a
+horizontal filter cannot.
 
 ### select / embedding
 
@@ -101,11 +105,27 @@ related model is itself a registered table. Embedding a relation whose model is
 not registered is denied with a 400 — there is no permission policy under which
 to expose it.
 
+### Upsert
+
+`POST` with `Prefer: resolution=merge-duplicates` (or `ignore-duplicates`) and
+`?on_conflict=col[,col2]` inserts new rows and, on a conflict against the named
+column(s):
+
+- `merge-duplicates` updates the existing row from the remaining body columns;
+- `ignore-duplicates` leaves the existing row untouched (and returns it
+  unchanged in the representation).
+
+Without an `on_conflict` target the request degrades to a plain insert (matching
+PostgREST when no conflict target can be inferred). Inserting a new row requires
+the model-level `add` permission; updating a conflicting row additionally
+requires `change` on that row.
+
 ## Permissions
 
 - **guardian** (default): lists/reads filtered via
   `get_objects_for_user(view_*)`; updates/deletes restricted to objects the user
-  may `change`/`delete`; creates require the model-level `add` permission.
+  may `change`/`delete`; creates require the model-level `add` permission. An
+  upsert that updates a conflicting row also requires `change` on that row.
 - **model**: plain `user.has_perm('app.view_model')`, no per-object filtering.
 - **open**: no permission checks (ninja `auth` still applies).
 
