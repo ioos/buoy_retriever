@@ -463,3 +463,25 @@ def test_non_filterable_column_in_or_group_400(datasets, admin):
     resp = client_for(admin).get(f"{PG}/datasets?or=(bogus.eq.1,slug.eq.alpha)")
     assert resp.status_code == 400
     assert "not filterable" in resp.json()["message"]
+
+
+# --------------------------------------------------------------------------- #
+# OpenAPI documentation
+# --------------------------------------------------------------------------- #
+def test_openapi_documents_full_row_read_schema():
+    from ninja import NinjaAPI
+
+    from ninja_postgrest import build_router
+
+    api = NinjaAPI()
+    api.add_router("/pg/", build_router())
+    schema = api.get_openapi_schema()
+    # get_full_schema names the component "Postgrest_<Model>"; it appears in
+    # components only because the GET operation references it via response=.
+    assert "Postgrest_Dataset" in schema["components"]["schemas"]
+    # The GET operation is registered with by_alias=True, so the component
+    # must document the flat PostgREST scalar column (the FK attname), not
+    # the nested Django relation name.
+    props = schema["components"]["schemas"]["Postgrest_Dataset"]["properties"]
+    assert "pipeline_id" in props  # flat PostgREST scalar column
+    assert "pipeline" not in props  # not the nested relation name

@@ -12,6 +12,7 @@ from ninja import Router
 
 from .conf import UNSET
 from .registry import TableConfig, get_registry
+from .schemas import get_full_schema
 
 
 def _auth_kwargs(table: TableConfig) -> dict:
@@ -55,6 +56,8 @@ def _register_table(router: Router, table: TableConfig) -> None:
             path,
             ["GET"],
             views.make_list_view(table),
+            response=list[get_full_schema(table)],
+            by_alias=True,
             **auth,
         )
     if table.allows("create"):

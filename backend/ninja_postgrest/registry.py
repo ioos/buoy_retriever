@@ -186,6 +186,9 @@ def reset_registry() -> None:
     """Clear the cached registry (used by tests overriding settings)."""
     global _registry
     _registry = None
+    from .schemas import reset_schema_cache
+
+    reset_schema_cache()
 
 
 def get_table_for_model(model: type[Model]) -> TableConfig | None:

@@ -23,11 +23,15 @@ Status legend: `[ ]` open · `[~]` in progress · `[x]` done.
 
 ## Dead code / cleanup
 
-- [ ] **F-3 — `schemas.py` is unused.** `get_full_schema`,
+- [x] **F-3 — `schemas.py` is unused.** `get_full_schema`,
   `reset_schema_cache`, and `JsonBody` have no call sites, so the intended
   OpenAPI full-row response schema is never generated (routes register raw view
   callables with no `response=`). Either wire `get_full_schema` into
   `router.add_api_operation(..., response=...)`, or delete the module.
+  Resolved: `get_full_schema` is wired into the GET operation's `response=` in
+  `router.py` (documents the full-row list shape; runtime output is unaffected
+  since generated views return `HttpResponse` directly). `reset_schema_cache`
+  is called from `reset_registry()`. `JsonBody` (no call sites) was removed.
 
 - [ ] **F-4 — `columns` reserved param is a no-op.** `parsing.RESERVED_PARAMS`
   reserves `columns` but nothing implements PostgREST's insert column
