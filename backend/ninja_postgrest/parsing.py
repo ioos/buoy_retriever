@@ -221,8 +221,14 @@ def order_to_orm(terms: list[OrderTerm]) -> list:
 # --------------------------------------------------------------------------- #
 # logical or/and
 # --------------------------------------------------------------------------- #
-def _parse_logical(value: str, combinator: str) -> Q:
-    """Parse the body of ``or=(...)`` / ``and=(...)`` into a combined ``Q``."""
+def _parse_logical(value: str, combinator: str, table=None) -> Q:
+    """Parse the body of ``or=(...)`` / ``and=(...)`` into a combined ``Q``.
+
+    When ``table`` is supplied, leaf columns are checked against its
+    ``filterable`` allowlist — the same guard applied to plain
+    ``?col=op.value`` filters — so logical groups cannot reach columns that
+    horizontal filters cannot.
+    """
     inner = value.strip()
     if inner.startswith("(") and inner.endswith(")"):
         inner = inner[1:-1]
@@ -231,7 +237,7 @@ def _parse_logical(value: str, combinator: str) -> Q:
         cond = raw.strip()
         if not cond:
             continue
-        q = _parse_condition(cond)
+        q = _parse_condition(cond, table)
         if combined is None:
             combined = q
         elif combinator == "or":
@@ -241,7 +247,7 @@ def _parse_logical(value: str, combinator: str) -> Q:
     return combined if combined is not None else Q()
 
 
-def _parse_condition(cond: str) -> Q:
+def _parse_condition(cond: str, table=None) -> Q:
     """Parse one condition inside a logical group.
 
     Either a nested ``and(...)`` / ``or(...)`` / ``not.and(...)`` group, or a
@@ -255,12 +261,20 @@ def _parse_condition(cond: str) -> Q:
     if cond.startswith(("and(", "or(")):
         kind = "and" if cond.startswith("and(") else "or"
         body = cond[len(kind) :]
-        q = _parse_logical(body, kind)
+        q = _parse_logical(body, kind, table)
         return ~q if negate else q
 
     column, _, token = cond.partition(".")
     if not token:
         raise PostgrestError(f"Malformed condition {cond!r}", code="PGRST-100")
+    if table is not None:
+        base = _base_column(column)
+        if base not in table.filterable:
+            raise PostgrestError(
+                f"Column {base!r} is not filterable on table {table.name!r}",
+                status=400,
+                code="PGRST-400",
+            )
     q = build_q(column, ("not." + token) if negate else token)
     return q
 
@@ -314,7 +328,7 @@ def parse_request(request: HttpRequest, table) -> ParsedQuery:
     for combinator in ("and", "or"):
         if combinator in params:
             for value in params.getlist(combinator):
-                q &= _parse_logical(value, combinator)
+                q &= _parse_logical(value, combinator, table)
 
     # select
     select = None

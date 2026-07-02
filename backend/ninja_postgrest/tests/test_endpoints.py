@@ -302,3 +302,11 @@ def test_unknown_table_404(admin):
 def test_non_filterable_column_400(datasets, admin):
     resp = client_for(admin).get(f"{PG}/datasets?bogus=eq.1")
     assert resp.status_code == 400
+
+
+def test_non_filterable_column_in_or_group_400(datasets, admin):
+    # Logical groups must honour the same filterable allowlist as plain
+    # filters, so a non-filterable column cannot sneak in via or=(...).
+    resp = client_for(admin).get(f"{PG}/datasets?or=(bogus.eq.1,slug.eq.alpha)")
+    assert resp.status_code == 400
+    assert "not filterable" in resp.json()["message"]
