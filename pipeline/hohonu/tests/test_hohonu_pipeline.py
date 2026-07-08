@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -7,7 +8,8 @@ import pytest
 import xarray as xr
 
 from common import io, test_utils
-from pipeline import HohonuDataset, defs_for_dataset
+from hohonu import HohonuDataset, defs_for_dataset
+from hohonu_defs.defs.hohonu_component import HohonuStateComponent
 
 from hohonu_api import HohonuApi
 
@@ -49,6 +51,37 @@ def defs(dataset):
 def test_can_build_defs(defs):
     assert defs is not None
     assert len(defs.assets) == 3
+
+
+def test_component_defs_state_config():
+    """The component caches state on the local filesystem under a stable key."""
+    component = HohonuStateComponent()
+    state_config = component.defs_state_config
+
+    assert state_config.key == "HohonuStateComponent"
+    assert state_config.management_type.value == "LOCAL_FILESYSTEM"
+
+
+def test_component_build_defs_without_state():
+    """With no cached state, only shared resources are defined (no assets)."""
+    component = HohonuStateComponent()
+
+    defs = component.build_defs_from_state(context=None, state_path=None)
+
+    assert defs.assets is None or len(defs.assets) == 0
+    assert "hohonu_api" in defs.resources
+
+
+def test_component_build_defs_from_state(dataset, tmp_path):
+    """Cached raw dataset configs are validated and expanded into assets."""
+    state_path = tmp_path / "state"
+    state_path.write_text(json.dumps([dataset.model_dump(mode="json")]))
+
+    component = HohonuStateComponent()
+    defs = component.build_defs_from_state(context=None, state_path=state_path)
+
+    assert len(defs.assets) == 3
+    assert "hohonu_api" in defs.resources
 
 
 @pytest.mark.vcr(TEST_DATA_DIR / "cassettes/test_hohonu_pipeline/test_daily_asset.yaml")

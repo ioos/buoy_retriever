@@ -1,3 +1,6 @@
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+
+# state-backed component state (fetched at runtime / CI, not committed)
+hohonu_defs/defs/.local_defs_state/

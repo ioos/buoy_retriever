@@ -11,6 +11,12 @@ omit = [
   ".pixi/*",
 ]
 
+[tool.dg]
+directory_type = "project"
+
+[tool.dg.project]
+root_module = "hohonu_defs"
+
 [tool.pixi.workspace]
 authors = [ "Alex Kerney <abk@mac.com>" ]
 channels = [ "conda-forge" ]
@@ -28,12 +34,13 @@ httpx = ">=0.28.1,<0.29"
 xarray = ">=2025.9.0,<2026"
 netcdf4 = ">=1.7.2,<2"
 sentry-sdk = ">=2.43.0,<3"
-dagster = ">=1.11.11,<2"
+dagster = ">=1.13,<2"
+dagster-dg-cli = ">=1.13,<2"
 s3fs = ">=2025.9.0,<2026"
 parse = ">=1.20.2,<2"
-dagster-k8s = ">=1!0.27.11,<1!0.28"
-dagster-postgres = ">=1!0.27.11,<1!0.28"
-dagster-aws = ">=1!0.27.11,<1!0.28"
+dagster-k8s = ">=1!0.29,<1!0.30"
+dagster-postgres = ">=1!0.29,<1!0.30"
+dagster-aws = ">=1!0.29,<1!0.30"
 pint = ">=0.25,<0.26"
 pyyaml = ">=6.0.2,<7"
 pyarrow = ">=24.0.0,<25"

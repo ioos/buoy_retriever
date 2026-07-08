@@ -55,15 +55,15 @@ class BackendAPIClient(BaseModel):
 
             return result.json()
 
-    def datasets_for_pipeline(
-        self,
-        pipeline_slug: str,
-        dataset_model: type[DatasetBase],
-    ):
-        """Get datasets for a given pipeline slug"""
+    def raw_datasets_for_pipeline(self, pipeline_slug: str) -> list[dict]:
+        """Get raw (unvalidated) dataset config dicts for a pipeline slug.
+
+        Used by state-backed components, which persist the raw API response and
+        validate it into dataset models later when building definitions.
+        """
         with sentry_sdk.start_span(
-            op="datasets_for_pipeline",
-            name=f"Get datasets for pipeline {pipeline_slug}",
+            op="raw_datasets_for_pipeline",
+            name=f"Get raw datasets for pipeline {pipeline_slug}",
         ):
             url = self.api_endpoint + f"configs/by-pipeline/{pipeline_slug}/"
 
@@ -74,7 +74,19 @@ class BackendAPIClient(BaseModel):
             )
             result.raise_for_status()
 
-            datasets_json = result.json()
+            return result.json()
+
+    def datasets_for_pipeline(
+        self,
+        pipeline_slug: str,
+        dataset_model: type[DatasetBase],
+    ):
+        """Get datasets for a given pipeline slug"""
+        with sentry_sdk.start_span(
+            op="datasets_for_pipeline",
+            name=f"Get datasets for pipeline {pipeline_slug}",
+        ):
+            datasets_json = self.raw_datasets_for_pipeline(pipeline_slug)
 
             datasets = []
 

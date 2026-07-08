@@ -12,6 +12,11 @@ ENV PYTHONWARNINGS once
 
 ENV PIXI_FROZEN true
 
+# Make the top-level modules (hohonu, hohonu_api, common) and the dg root
+# module importable for the `dg` CLI and `code-server -m`, which do not add the
+# working directory to sys.path the way `code-server -f script.py` did.
+ENV PYTHONPATH ${HOME}
+
 WORKDIR ${HOME}
 COPY ${SOURCE}/pyproject.toml ${SOURCE}/pixi.lock ${HOME}/
 
@@ -28,6 +33,8 @@ COPY ${SOURCE}/*.py \
     ${SOURCE}/*.yaml \
     ${HOME}/
 
+COPY ${SOURCE}/hohonu_defs/ ${HOME}/hohonu_defs/
+
 COPY ${SOURCE}/tests/ ${HOME}/tests/
 
 # COPY ${SOURCE}/platforms \
@@ -39,4 +46,7 @@ ENV IMAGE_TAG=${IMAGE_TAG:-unknown}
 ENTRYPOINT ["/bin/bash", "/shell-hook.sh"]
 
 
-CMD [ "dagster", "code-server", "start", "-p", "4000", "-f", "pipeline.py", "-h", "0.0.0.0" ]
+# Refresh state-backed defs from the backend API (reachable only at runtime),
+# then serve the cached definitions. Subsequent code-location reloads read the
+# cached state instead of re-calling the API.
+CMD [ "sh", "-c", "dg utils refresh-defs-state && exec dagster code-server start -p 4000 -m hohonu_defs.definitions -h 0.0.0.0" ]
