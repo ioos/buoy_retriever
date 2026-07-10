@@ -1,0 +1,43 @@
+{
+  "name": "buoy_retriever (Codespaces)",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": "../.."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "remoteUser": "vscode",
+  "forwardPorts": [8080, 3000, 3002, 8969, 5432, 5433],
+  "portsAttributes": {
+    "8080": { "label": "backend (Django)" },
+    "3000": { "label": "frontend (Next.js)" },
+    "3002": { "label": "Dagster UI" },
+    "8969": { "label": "Spotlight" },
+    "5432": { "label": "postgres" },
+    "5433": { "label": "dagster postgres" }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "biomejs.biome",
+        "timonwong.shellcheck",
+        "tamasfe.even-better-toml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "${containerWorkspaceFolder}/backend/.pixi/envs/dev/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" },
+        "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+        "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+        "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+        "[json]": { "editor.defaultFormatter": "biomejs.biome" }
+      }
+    }
+  }
+}
