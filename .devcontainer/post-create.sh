@@ -5,8 +5,10 @@ set -euo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-# Named volumes are created root-owned on first use
-sudo chown -R vscode:vscode \
+# Named volumes (local config) are created root-owned on first use. In the
+# Codespaces config there are no volumes, so these paths don't exist yet -
+# the installs below create them with the right ownership.
+for path in \
     backend/.pixi \
     pipeline/_dagster/.pixi \
     pipeline/aveva/.pixi \
@@ -14,7 +16,11 @@ sudo chown -R vscode:vscode \
     pipeline/s3_timeseries/.pixi \
     common/.venv \
     frontend/node_modules \
-    /home/vscode/.cache
+    /home/vscode/.cache; do
+    if [ -e "$path" ]; then
+        sudo chown -R vscode:vscode "$path"
+    fi
+done
 
 # Trust the workspace mise.toml so interactive shells don't prompt
 mise trust mise.toml
