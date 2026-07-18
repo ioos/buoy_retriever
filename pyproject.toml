@@ -1,0 +1,167 @@
+[build-system]
+build-backend = "uv_build"
+
+requires = [ "uv-build>=0.7.19,<0.12" ]
+
+[project]
+name = "buoy-retriever"
+version = "0.1.0"
+description = "IOOS data management system"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = [ "LICENSE" ]
+authors = [
+  { name = "Alex Kerney", email = "akerney@gmri.org" },
+]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+  "Typing :: Typed",
+]
+dependencies = [  ]
+
+urls."Bug Tracker" = "https://github.com/ioos/buoy_retriever/issues"
+urls.Changelog = "https://github.com/ioos/buoy_retriever/releases"
+urls.Discussions = "https://github.com/ioos/buoy_retriever/discussions"
+urls.Homepage = "https://github.com/ioos/buoy_retriever"
+
+[dependency-groups]
+dev = [
+  { include-group = "test" },
+]
+test = [
+  "pytest>=9",
+  "pytest-cov>=7",
+]
+docs = [
+  "zensical>=0.0.20",
+]
+e2e = [
+  "dagster>=1.13.14",
+  "dagster-graphql>=1.13.14",
+  "httpx>=0.28.1",
+  "netcdf4>=1.7.3",
+  "xarray>=2025.6.1",
+]
+
+[tool.ruff]
+show-fixes = true
+
+lint.extend-select = [
+  "ARG",  # flake8-unused-arguments
+  "B",    # flake8-bugbear
+  "BLE",  # flake8-blind-except
+  "C4",   # flake8-comprehensions
+  "DTZ",  # flake8-datetimez
+  "EM",   # flake8-errmsg
+  "EXE",  # flake8-executable
+  "FA",   # flake8-future-annotations
+  "FLY",  # flynt
+  "FURB", # refurb
+  "G",    # flake8-logging-format
+  "I",    # isort
+  "ICN",  # flake8-import-conventions
+  "ISC",  # flake8-implicit-str-concat
+  "LOG",  # flake8-logging
+  "NPY",  # NumPy specific rules
+  "PD",   # pandas-vet
+  "PERF", # perflint
+  "PGH",  # pygrep-hooks
+  "PIE",  # flake8-pie
+  "PL",   # pylint
+  "PT",   # flake8-pytest-style
+  "PTH",  # flake8-use-pathlib
+  "PYI",  # flake8-pyi
+  "Q",    # flake8-quotes
+  "RET",  # flake8-return
+  "RSE",  # flake8-raise
+  "RUF",  # Ruff-specific
+  "SIM",  # flake8-simplify
+  "SLOT", # flake8-slots
+  "T10",  # flake8-debugger
+  "T20",  # flake8-print
+  "TC",   # flake8-type-checking
+  "TRY",  # tryceratops
+  "UP",   # pyupgrade
+  "YTT",  # flake8-2020
+]
+lint.ignore = [
+  "PLR09",   # Too many <...>
+  "PLR2004", # Magic value used in comparison
+]
+
+# Uncomment if using a _compat.typing backport
+# typing-modules = ["buoy_retriever._compat.typing"]
+lint.per-file-ignores."noxfile.py" = [ "T20" ]
+lint.per-file-ignores."tests/**" = [ "T20" ]
+
+[tool.pylint]
+py-version = "3.10"
+ignore-paths = [ ".*/_version.py" ]
+reports.output-format = "colorized"
+similarities.ignore-imports = "yes"
+messages_control.disable = [
+  "design",
+  "fixme",
+  "line-too-long",
+  "missing-module-docstring",
+  "missing-function-docstring",
+  "wrong-import-position",
+]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = [ "-ra", "--showlocals" ]
+strict = true
+filterwarnings = [
+  "error",
+  # dagster-graphql's client calls gql's execute() with a deprecated kwarg
+  # shape; harmless, but filterwarnings=error would otherwise turn it into a
+  # test failure every time tests/e2e drives the Dagster GraphQL API.
+  "ignore:Using variable_values and operation_name arguments:DeprecationWarning:gql",
+  # The netCDF4 wheel is built against an older numpy C API; the size-changed
+  # warning on import is benign but tests/e2e imports it (via xarray) to
+  # verify NetCDF output.
+  "ignore:numpy.ndarray size changed:RuntimeWarning",
+]
+log_level = "INFO"
+# tests/e2e needs Docker plus the `e2e` dependency group (uv sync --group e2e)
+# and is meant to be run explicitly (`uv run pytest tests/e2e`) or via
+# .github/workflows/e2e.yml -- excluded here so it isn't swept into the
+# scaffold's default cross-platform `uv run pytest` run in ci.yml.
+norecursedirs = [ "tests/e2e" ]
+testpaths = [
+  "tests",
+]
+
+[tool.coverage]
+run.source = [ "buoy_retriever" ]
+report.exclude_also = [
+  '\.\.\.',
+  'if typing.TYPE_CHECKING:',
+]
+
+[tool.mypy]
+files = [ "src", "tests" ]
+python_version = "3.10"
+warn_unused_configs = true
+strict = true
+enable_error_code = [ "ignore-without-code", "redundant-expr", "truthy-bool" ]
+warn_unreachable = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = "buoy_retriever.*"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true

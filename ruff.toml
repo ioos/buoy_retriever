@@ -18,6 +18,8 @@ extend-select = [
 
 [lint.per-file-ignores]
 "**/tests/**.py" = ["S101"] # allow asserts in tests
+# the e2e suite legitimately drives `docker compose` via subprocess
+"tests/e2e/**.py" = ["S101", "S603", "S607"]
 
 [lint.isort]
 known-first-party = ["common"]
