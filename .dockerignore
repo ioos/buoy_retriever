@@ -1,2 +1,5 @@
 **/.pixi
 docker-data
+# e2e-only VCR shim: mounted as sitecustomize.py by docker-compose.e2e.yaml,
+# must never be baked into a production image
+pipeline/hohonu/e2e_sitecustomize.py

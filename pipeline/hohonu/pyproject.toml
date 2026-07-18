@@ -49,3 +49,9 @@ pytest = "pytest -vv --ignore=common --record-mode=once"
 
 [tool.pixi.environments]
 dev = [ "dev" ]
+
+[tool.pixi.target.linux-64.dependencies]
+vcrpy = ">=8.3.0,<9"
+
+[tool.pixi.target.linux-aarch64.dependencies]
+vcrpy = ">=8.3.0,<9"
