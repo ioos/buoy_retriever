@@ -63,12 +63,25 @@ test-hohonu:
 	docker build -f pipeline/hohonu/Dockerfile -t buoy_retriever-hohonu .
 	docker run -v ./docker-data/test-data:/mnt/test-data buoy_retriever-hohonu pixi run pytest --cov=.
 
-test-aveva:
-	docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .
-	docker run  -v ./docker-data/test-data:/mnt/test-data:ro  --env-file ./docker-data/secret.env  buoy_retriever-aveva pixi run pytest --aveva --cov=.
-
 test-s3-timeseries:
 	docker build -f pipeline/s3_timeseries/Dockerfile -t buoy_retriever-s3_timeseries .
 	docker run -v ./docker-data/test-data:/mnt/test-data buoy_retriever-s3_timeseries pixi run pytest --cov=.
 
-test-all: test-common test-backend test-s3-timeseries test-hohonu
+# Run the end-to-end connectivity suite (spins up an isolated docker-compose
+# stack; see tests/e2e/conftest.py and docker-compose.e2e.yaml).
+# --no-install-project: the suite doesn't import the root scaffold package,
+# so don't require src/buoy_retriever to exist/build.
+test-e2e:
+	uv sync --group e2e --no-install-project
+	uv run --no-sync pytest tests/e2e -v
+
+# Bring up the e2e stack and leave it running (for local debugging: set
+# E2E_KEEP_STACK=1 so the test suite's teardown doesn't tear it down)
+e2e-up:
+	docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e up -d --build --wait db backend dagster_postgres dagster_daemon dagster_ui hohonu
+
+# Tear down the e2e stack and remove its volumes
+e2e-down:
+	docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e down -v --remove-orphans
+
+test-all: test-common test-backend test-s3-timeseries test-hohonu test-aveva test-e2e

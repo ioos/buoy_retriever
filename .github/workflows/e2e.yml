@@ -1,0 +1,55 @@
+name: E2E
+
+on:
+  push:
+    branches:
+      - main
+    paths: &e2e_paths
+      - common/**
+      - backend/**
+      - pipeline/hohonu/**
+      - pipeline/_dagster/**
+      - docker-compose.yaml
+      - docker-compose.e2e.yaml
+      - docker-data/secret.e2e.env
+      - docker-data/test-data/**,
+      - tests/e2e/**
+      - .github/workflows/e2e.yml
+  pull_request:
+    paths: *e2e_paths
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: End-to-end connectivity suite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+
+    - name: Set up Python
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+
+    # --no-install-project: tests/e2e never imports the root scaffold
+    # package, and building it requires src/buoy_retriever, which may not
+    # exist on branches that predate the scaffold. --no-sync on the run
+    # step keeps uv from re-syncing (and re-building the project) there.
+    - name: Install dependencies
+      run: uv sync --group e2e --no-install-project
+
+    - name: Run e2e suite
+      run: uv run --no-sync pytest tests/e2e -v --junitxml=junit.xml -o junit_family=legacy
+
+    - name: Dump stack logs and tear down
+      if: always()
+      run: |
+        docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e logs --no-color
+        docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e down -v --remove-orphans
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
