@@ -4,23 +4,23 @@ icon: lucide/network
 
 # End-to-end connectivity tests
 
-`tests/e2e/` is currently the only test suite that exercises the
+`tests/e2e/` exercises the
 [pipeline registration handshake](./index.md#the-pipeline-registration-handshake)
-against a *real* multi-container stack: a live Django backend with a
+against a multi-container stack: a live Django backend with a
 Postgres database, a Dagster pipeline (Hohonu), and the
 Docker network between them. Everything else in the repo tests one
 component at a time (VCR cassettes for API calls, `moto` for S3, fixtures
-for Dagster defs) — this suite is what proves the pieces actually connect.
+for Dagster defs) — this suite is what proves the pieces can communicate.
 
 ## What it covers
 
-The suite is three test files sharing one stack. Conceptually they build on
+The suite is three test files that focus on different aspects of the system. Conceptually they build on
 each other, but each is self-sufficient — the shared setup (stack boot, API
 key seeding, `boothbay_dmr` config seeding + location reload) lives in
 session-scoped fixtures in `conftest.py`, so any file can be run on its own
 and actual collection order doesn't matter:
 
-- **`test_registration.py`** — the `hohonu` code location loads without
+- **`test_registration.py`** — tests that the `hohonu` code location loads without
   error (its `build_defs()` POSTs the config schema via
   `BackendAPIClient.register_pipeline()`), and the backend's
   `/backend/api/pipelines/` endpoint shows the stored schema.
@@ -85,7 +85,7 @@ so it can run alongside a developer's `make core` stack:
   satisfy another run's assertions, and it cleans itself up (kept, along
   with the stack, under `E2E_KEEP_STACK=1`).
 
-## How it stays hermetic (no Hohonu credentials)
+### How it stays hermetic (no Hohonu credentials)
 
 The Hohonu API base URL is hardcoded in `pipeline/hohonu/hohonu_api.py`, so
 instead of a stub server, the override bind-mounts
@@ -102,7 +102,7 @@ build contexts via `.dockerignore`, so it cannot end up active (or even
 present) in a dev or production image — only the e2e override's mount
 creates a real `sitecustomize.py`.
 
-Two hard-won details, if you ever need to touch this:
+Two details, if you ever need to touch this:
 
 - The shim wraps `requests.get` per-call rather than holding one
   `vcr.use_cassette()` context open for the process lifetime — Dagster's
@@ -115,7 +115,7 @@ Two hard-won details, if you ever need to touch this:
   skips `site` processing entirely — the exact mechanism the shim relies
   on.
 
-## Why the API key has to be seeded
+### Why the API key has to be seeded
 
 `BACKEND_API_KEY` is not enough by itself: the backend authenticates
 pipelines against `PipelineApiKey` **database rows**
@@ -130,9 +130,7 @@ backend's health check, not for seeding.
 `.github/workflows/e2e.yml` runs the suite on pull requests and pushes to
 `main` that touch `backend/`, `common/`, `pipeline/hohonu/`,
 `pipeline/_dagster/`, the compose files, or the suite itself. On failure it
-dumps the full compose logs into the Actions log before tearing down. It is
-additive — the existing per-service `core.yml`/`pipeline_*.yml` workflows
-are unchanged.
+dumps the full compose logs into the Actions log before tearing down.
 
 ## Maintenance notes
 
@@ -148,7 +146,7 @@ Things most likely to break this suite, and what to do about them:
   `--record-mode=once` (the normal `pytest-recording` flow), then update
   the partition-key constants at the top of `test_ingest.py` if the
   recorded dates changed.
-- **The two load-bearing oddities.** The per-call `requests.get` wrapper
+- **The two oddities.** The per-call `requests.get` wrapper
   and the in-process executor (see above) both look like they could be
   simplified. They can't — both were forced by observed Dagster behavior,
   and regressing either produces the same confusing real-API 401.

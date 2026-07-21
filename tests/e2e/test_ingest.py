@@ -2,7 +2,7 @@
 dataset (seeded by the `boothbay_dmr_seeded` fixture) via the Dagster GraphQL API,
 and verify the resulting NetCDF/parquet output lands on the shared-fs
 volume. The Hohonu API call itself is replayed from the existing
-`test_daily_asset.yaml` VCR cassette by `pipeline/hohonu/sitecustomize.py`
+`test_daily_asset.yaml` VCR cassette by `pipeline/hohonu/e2e_sitecustomize.py`
 (see docker-compose.e2e.yaml) -- no real Hohonu credentials involved.
 
 Runs are launched with the in-process executor (via `run_config`, not by
@@ -23,7 +23,7 @@ from dagster_graphql import DagsterGraphQLClient
 
 # Matches the partition covered by
 # docker-data/test-data/hohonu/cassettes/test_hohonu_pipeline/test_daily_asset.yaml
-PARTITION_KEY = "2025-09-30"
+DAILY_PARTITION_KEY = "2025-09-30"
 
 MONTHLY_PARTITION_KEY = "2025-09-01"
 
@@ -88,7 +88,7 @@ def test_materialize_boothbay_dmr(
     _run_job_to_completion(
         dagster_client,
         job_name=DAILY_JOB,
-        partition_key=PARTITION_KEY,
+        partition_key=DAILY_PARTITION_KEY,
     )
     _run_job_to_completion(
         dagster_client,
