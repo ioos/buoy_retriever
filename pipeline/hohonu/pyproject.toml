@@ -1,5 +1,5 @@
 [tool.ruff]
-extend = "../../ruff.toml"
+extend = "../../pyproject.toml"
 lint.isort.known-local-folder = [ "hohonu_api" ]
 
 [tool.pytest]
@@ -37,6 +37,7 @@ dagster-aws = ">=1!0.27.11,<1!0.28"
 pint = ">=0.25,<0.26"
 pyyaml = ">=6.0.2,<7"
 pyarrow = ">=24.0.0,<25"
+vcrpy = ">=8.3.0,<9"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=9"

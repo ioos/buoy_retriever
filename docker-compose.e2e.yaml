@@ -1,0 +1,96 @@
+# Override for the isolated end-to-end connectivity suite (tests/e2e/).
+#
+# Usage (see tests/e2e/conftest.py, which drives this automatically):
+#   docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml \
+#     -p buoy_retriever_e2e up -d --build --wait \
+#     db backend dagster_postgres dagster_daemon dagster_ui hohonu
+#
+# Goals vs. the base docker-compose.yaml (dev) stack:
+# - Fresh DB every run: no bind-mounted postgres data dirs, so `down -v`
+#   before/after a run leaves nothing behind.
+# - Mocked, non-sensitive secrets (docker-data/secret.e2e.env) instead of a
+#   developer's real docker-data/secret.env.
+# - No port conflicts with a developer's `make core` stack running alongside.
+# - Exercise the built images, not live-reloaded local source: service
+#   source bind mounts are dropped (kept only where needed for test fixtures,
+#   all read-only; only the shared-fs output volume is writable).
+# - Hermetic Hohonu API: pipeline/hohonu/e2e_sitecustomize.py (excluded from
+#   image builds via .dockerignore) is bind-mounted as
+#   /home/ioos/sitecustomize.py with PYTHONPATH set so Python auto-imports it
+#   in every process, replaying the existing VCR cassette -- see that file
+#   for why a plain command-wrapper isn't enough.
+
+services:
+  db:
+    ports: !override
+      - "${BUOY_RETRIEVER_E2E_DB_PORT:-15432}:5432"
+    volumes: !override []
+    env_file: !override
+      - ./docker-data/secret.e2e.env
+    # Every e2e run starts from an empty volume, so TimescaleDB runs its
+    # full first-boot initdb -- on a cold CI runner that exceeds the ~10s
+    # of failing checks the base healthcheck tolerates (2s x 5 retries,
+    # no grace period). Failures during start_period don't count.
+    healthcheck:
+      start_period: 90s
+
+  backend:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/secret.e2e.env
+    volumes: !override
+      - ./docker-data/test-data:/mnt/test-data:ro
+    ports: !override
+      - "${BUOY_RETRIEVER_E2E_BACKEND_PORT:-18080}:8080"
+
+  dagster_postgres:
+    ports: !override
+      - "${BUOY_RETRIEVER_E2E_DAGSTER_DB_PORT:-15433}:5432"
+    volumes: !override []
+    # Same first-boot initdb grace period as `db` above.
+    healthcheck:
+      start_period: 90s
+
+  dagster_daemon:
+    volumes: !override
+      - ./pipeline/_dagster/workspace.yaml:/home/ioos/workspace.yaml:ro
+      - ./pipeline/_dagster/dagster.yaml:/home/ioos/dagster.yaml:ro
+
+  dagster_ui:
+    ports: !override
+      - "${BUOY_RETRIEVER_E2E_DAGSTER_UI_PORT:-13002}:3002"
+    volumes: !override
+      - ./pipeline/_dagster/workspace.yaml:/home/ioos/workspace.yaml:ro
+      - ./pipeline/_dagster/dagster.yaml:/home/ioos/dagster.yaml:ro
+
+  # aveva and s3_timeseries are never started by the e2e suite, but compose
+  # validates every service's env_file just to parse the merged model --
+  # and the base file points them at the gitignored docker-data/secret.env,
+  # which doesn't exist on CI checkouts. Point them at the committed
+  # placeholder env so `config`/`logs`/`down` work on a fresh clone.
+  aveva:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/dagster.env
+      - ./docker-data/secret.e2e.env
+
+  s3_timeseries:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/dagster.env
+      - ./docker-data/secret.e2e.env
+      - ./docker-data/s3_pipeline.env
+
+  hohonu:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/dagster.env
+      - ./docker-data/secret.e2e.env
+    environment:
+      PYTHONPATH: /home/ioos
+    volumes: !override
+      - ./pipeline/hohonu/e2e_sitecustomize.py:/home/ioos/sitecustomize.py:ro
+      - ./docker-data/test-data:/mnt/test-data:ro
+      # tests/e2e/conftest.py points this at a per-run temporary directory
+      # so output from one run can never satisfy another run's assertions
+      - ${BUOY_RETRIEVER_E2E_SHARED_FS:-./docker-data/shared-fs-e2e}:/mnt/efs/

@@ -192,4 +192,20 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         """Generate monthly parquet files from monthly xarray datasets (netcdf)"""
         return monthly_ds.to_dataframe()
 
-    return dg.Definitions(assets=[daily_df, monthly_ds, monthly_parquet])
+    # daily_df and monthly_ds/monthly_parquet use different PartitionsDefinitions,
+    # so Dagster can't fold them into one implicit asset job -- without an
+    # explicit job here, there'd be no way to launch a run for this dataset's
+    # assets (from the UI, the GraphQL API, or a sensor) at all.
+    daily_job = dg.define_asset_job(
+        f"{dataset.safe_slug}_daily_job",
+        selection=[daily_df],
+    )
+    monthly_job = dg.define_asset_job(
+        f"{dataset.safe_slug}_monthly_job",
+        selection=[monthly_ds, monthly_parquet],
+    )
+
+    return dg.Definitions(
+        assets=[daily_df, monthly_ds, monthly_parquet],
+        jobs=[daily_job, monthly_job],
+    )

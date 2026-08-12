@@ -219,6 +219,7 @@ docker-data/dagster_postgres
 # Ignore .env files that may contain sensitive information
 docker-data/secret.env
 docker-data/shared-fs/
+docker-data/shared-fs-e2e/
 
 # Dagster local storage
 pipeline/*/.dagster/
