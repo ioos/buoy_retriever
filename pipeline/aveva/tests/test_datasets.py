@@ -13,6 +13,16 @@ from pipeline import AvevaTimeseriesDataset, defs_for_dataset
 TEST_DATA_DIR = Path("/mnt/test-data/aveva_timeseries/")
 
 
+@pytest.fixture(scope="session")
+def lazy_datadir() -> Path:
+    return TEST_DATA_DIR
+
+
+@pytest.fixture(scope="session")
+def original_datadir() -> Path:
+    return TEST_DATA_DIR
+
+
 @pytest.fixture
 def dataset_config(asset_name, created_dt_str):
     config_path = TEST_DATA_DIR / f"fixtures/{asset_name}.json"
@@ -59,7 +69,7 @@ def test_can_build_defs(defs):
         pytest.param(
             "aveva",
             "2026-05-21T17:08:19.590Z",
-            TEST_DATA_DIR / "test_aveva/test_aveva_20260302.csv",
+            "test_aveva/test_aveva_20260302",
             "2026-03-02",
         ),
     ],
@@ -72,6 +82,7 @@ def test_daily_asset(
     asset_name,
     snapshot_path,
     partition_key,
+    pandas_csv_regression,
 ):
     daily_df = test_utils.get_asset_by_name(defs, "daily_df")
 
@@ -84,15 +95,7 @@ def test_daily_asset(
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
 
-    snapshot = pd.read_csv(
-        snapshot_path,
-    )
-
-    snapshot["time"] = pd.to_datetime(
-        df["time"],
-    )
-
-    pd.testing.assert_frame_equal(df, snapshot)
+    pandas_csv_regression.check(df, basename=snapshot_path)
 
 
 @pytest.mark.parametrize(
@@ -105,7 +108,7 @@ def test_daily_asset(
                 "2026-05-09": TEST_DATA_DIR / "test_aveva/test_aveva_20260509.csv",
                 "2026-05-10": TEST_DATA_DIR / "test_aveva/test_aveva_20260510.csv",
             },
-            TEST_DATA_DIR / "test_aveva/test_aveva_202605.nc",
+            "test_aveva/test_aveva_202605",
             "2026-05-01",
         ),
     ],
@@ -117,6 +120,7 @@ def test_monthly_asset(
     daily_snapshot_dict,
     monthly_snapshot_path,
     monthly_partition_key,
+    nc_io_regression,
 ):
     monthly_ds = test_utils.get_asset_by_name(defs, "monthly_ds")
     spec = monthly_ds.get_asset_spec()
@@ -141,6 +145,4 @@ def test_monthly_asset(
 
     assert isinstance(ds, xr.Dataset)
 
-    snapshot = xr.load_dataset(monthly_snapshot_path, decode_timedelta=False)
-
-    xr.testing.assert_equal(ds, snapshot)
+    nc_io_regression.check(ds, basename=monthly_snapshot_path)
