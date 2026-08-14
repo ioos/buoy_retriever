@@ -57,6 +57,11 @@ pytest-django = "*"
 pytest-cov = ">=7.1.0,<8"
 pytest-env = ">=1.6.0,<2"
 
+[tool.pixi.feature.dev.pypi-dependencies]
+# Standard PostgREST client, used to validate the ninja_postgrest endpoints
+# against a real client library in the integration tests.
+postgrest = "*"
+
 [tool.pixi.environments]
 dev = [ "dev" ]
 
