@@ -27,11 +27,14 @@ jobs:
         needs: [shortsha]
         uses: ./.github/workflows/_build_image.yml
         secrets: inherit
+        permissions:
+            contents: read
+            packages: write
         with:
             working_directory: ./pipeline/hohonu
             image_name: buoy_retriever_hohonu
             image_tag: ${{ needs.shortsha.outputs.shortsha }}
-            # push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+            push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
             test_command: "pixi run pytest --cov=. --cov-report=xml:/tmp/coverage.xml --cov-report=term-missing --junitxml=/tmp/junit.xml -o junit_family=legacy"
             coverage_flags: hohonu
             upload_tests: true
