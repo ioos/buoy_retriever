@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/gulfofmaine/odp-releaser/main/schemas/deploy_targets.schema.json
+# Deploy repositories notified after a pipeline image is published.
+# The odp-releaser `notify` workflow dispatches a repository_dispatch event to
+# each entry so the deploy repo can bump the image tag in its manifests.
+- owner: gulfofmaine
+  repo: Offshore_Operations_DAC
