@@ -81,3 +81,8 @@ repos:
     rev: v2.2.0
     hooks:
       - id: biome-check
+
+  - repo: https://github.com/gulfofmaine/odp-releaser
+    rev: fef1724a2cdd7725a519ebb059a60aca71e24e68
+    hooks:
+      - id: validate-deploy-targets

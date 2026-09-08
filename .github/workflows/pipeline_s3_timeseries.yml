@@ -38,13 +38,13 @@ jobs:
             test_command: "pixi run pytest --cov=. --cov-report=xml:/tmp/coverage.xml --cov-report=term-missing --junitxml=/tmp/junit.xml -o junit_family=legacy"
             coverage_flags: s3_timeseries
             upload_tests: true
-    # deploy:
-    #     needs: [shortsha, build_test_push]
-    #     uses: ./.github/workflows/bump_dagster_argo.yml
-    #     if: ${{ github.repository == 'gulfofmaine/buoy_retriever' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
-    #     with:
-    #         app_path: ./apps/sea-eagle/s3_timeseries.yaml
-    #         image_tag: ${{ needs.shortsha.outputs.shortsha }}
-    #         image_name: buoy_retriever_s3_timeseries
-    #     secrets:
-    #         GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+
+    deploy:
+        needs: [shortsha, build_test_push]
+        uses: ./.github/workflows/_notify.yml
+        if: ${{ github.repository == 'ioos/buoy_retriever' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        with:
+            tag: ${{ needs.build_test_push.outputs.image_ref }}
+            image_name: ${{ needs.build_test_push.outputs.image_name }}
+            digest: ${{ needs.build_test_push.outputs.digest }}
+        secrets: inherit

@@ -71,6 +71,9 @@ on:
       image_ref:
         description: Docker image reference
         value: ${{ jobs.build-image.outputs.image_ref }}
+      digest:
+        description: Digest (sha256:...) of the pushed image
+        value: ${{ jobs.build-image.outputs.digest }}
 
   workflow_dispatch:
     inputs:
@@ -149,6 +152,7 @@ jobs:
     outputs:
       image_name: ${{ steps.env_var.outputs.image_name }}
       image_ref: ${{ steps.env_var.outputs.image_ref }}
+      digest: ${{ steps.push.outputs.digest }}
 
     steps:
       - name: Checkout Repository
@@ -168,10 +172,9 @@ jobs:
       - name: Set Job Environment Variables
         id: env_var
         run: |
-          SHA7="${GITHUB_SHA::7}"
-          DOCKER_TAG=$SHA7
+          DOCKER_TAG="${{ inputs.image_tag }}"
           IMAGE_NAME="ghcr.io/ioos/${{ inputs.image_name }}"
-          echo "DOCKER_TAG=${{ inputs.image_tag }}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${DOCKER_TAG}" >> $GITHUB_ENV
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
           echo "image_name=${IMAGE_NAME}" >> $GITHUB_OUTPUT
           echo "image_ref=${DOCKER_TAG}" >> $GITHUB_OUTPUT
@@ -297,8 +300,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push Docker Image to GHCR
+        id: push
         if: ${{ inputs.push_image }}
-        run: docker push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }} | cut -d@ -f2)
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
 
       - name: Move Docker Cache
         run: |
