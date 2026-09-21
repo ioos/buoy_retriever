@@ -27,11 +27,24 @@ jobs:
         needs: [shortsha]
         uses: ./.github/workflows/_build_image.yml
         secrets: inherit
+        permissions:
+            contents: read
+            packages: write
         with:
             working_directory: ./pipeline/aveva
             image_name: buoy_retriever_aveva
             image_tag: ${{ needs.shortsha.outputs.shortsha }}
-            # push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+            push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
             test_command: "pixi run pytest --cov=. --cov-report=xml:/tmp/coverage.xml --cov-report=term-missing --junitxml=/tmp/junit.xml -o junit_family=legacy"
             coverage_flags: aveva
             upload_tests: true
+
+    deploy:
+        needs: [shortsha, build_test_push]
+        uses: ./.github/workflows/_notify.yml
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        with:
+            tag: ${{ needs.build_test_push.outputs.image_ref }}
+            image_name: ${{ needs.build_test_push.outputs.image_name }}
+            digest: ${{ needs.build_test_push.outputs.digest }}
+        secrets: inherit

@@ -27,22 +27,24 @@ jobs:
         needs: [shortsha]
         uses: ./.github/workflows/_build_image.yml
         secrets: inherit
+        permissions:
+            contents: read
+            packages: write
         with:
             working_directory: ./pipeline/hohonu
             image_name: buoy_retriever_hohonu
             image_tag: ${{ needs.shortsha.outputs.shortsha }}
-            # push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+            push_image: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
             test_command: "pixi run pytest --cov=. --cov-report=xml:/tmp/coverage.xml --cov-report=term-missing --junitxml=/tmp/junit.xml -o junit_family=legacy"
             coverage_flags: hohonu
             upload_tests: true
 
-    # deploy:
-    #     needs: [shortsha, build_test_push]
-    #     uses: ./.github/workflows/bump_dagster_argo.yml
-    #     if: ${{ github.repository == 'gulfofmaine/buoy_retriever' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
-    #     with:
-    #         app_path: ./apps/sea-eagle/hohonu.yaml
-    #         image_tag: ${{ needs.shortsha.outputs.shortsha }}
-    #         image_name: buoy_retriever_hohonu
-    #     secrets:
-    #         GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+    deploy:
+        needs: [shortsha, build_test_push]
+        uses: ./.github/workflows/_notify.yml
+        if: ${{ github.repository == 'ioos/buoy_retriever' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        with:
+            tag: ${{ needs.build_test_push.outputs.image_ref }}
+            image_name: ${{ needs.build_test_push.outputs.image_name }}
+            digest: ${{ needs.build_test_push.outputs.digest }}
+        secrets: inherit
