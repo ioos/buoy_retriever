@@ -1,5 +1,7 @@
 import pytest
 
+pytest_plugins = ["common.test_utils.snapshot"]
+
 
 def pytest_addoption(parser):
     parser.addoption(

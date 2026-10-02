@@ -39,6 +39,7 @@ pytest-recording = ">=0.13.4,<0.14"
 pytest-cov = "*"
 moto = ">=5.1.16,<6"
 pytest-env = ">=1.2.0,<2"
+pytest-regressions = ">=2.11.0,<3"
 
 [tool.pixi.feature.dev.tasks]
 pytest = "pytest -vv --ignore=common --record-mode=once"

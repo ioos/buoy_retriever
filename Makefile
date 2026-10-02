@@ -59,6 +59,10 @@ shell:
 test-common:
 	cd common; uv run pytest --cov=.
 
+test-aveva:
+	docker build -f pipeline/aveva/Dockerfile -t buoy_retriever-aveva .
+	docker run  -v ./docker-data/test-data:/mnt/test-data  --env-file ./docker-data/secret.env  buoy_retriever-aveva pixi run pytest --cov=.
+
 test-backend:
 	docker build -t buoy_retriever-backend backend/
 	docker run -v ./docker-data/test-data:/mnt/test-data:ro buoy_retriever-backend pixi run pytest --cov=.
