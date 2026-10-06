@@ -131,27 +131,27 @@
               {
                 "config": [
                   {
-                    "fspan": [-1, 12],
+                    "fspan": [-5, 20],
                     "tspan": [0, 1],
-                    "vspan": [5, 20],
+                    "vspan": [-1, 12],
                     "period": "quarter"
                   },
                   {
-                    "fspan": [2, 24],
+                    "fspan": [-1, 30],
                     "tspan": [1, 2],
-                    "vspan": [5, 20],
+                    "vspan": [2, 24],
                     "period": "quarter"
                   },
                   {
-                    "fspan": [12, 33],
+                    "fspan": [0, 38],
                     "tspan": [2, 3],
-                    "vspan": [5, 20],
+                    "vspan": [12, 33],
                     "period": "quarter"
                   },
                   {
-                    "fspan": [3, 25],
+                    "fspan": [0, 30],
                     "tspan": [3, 4],
-                    "vspan": [5, 20],
+                    "vspan": [3, 25],
                     "period": "quarter"
                   }
                 ],
@@ -168,7 +168,7 @@
         ]
       },
       "created": "2026-01-27T18:59:22.684Z",
-      "edited": "2026-10-05T15:25:39.953Z",
+      "edited": "2026-10-06T18:07:26.615Z",
       "state": "Published"
     }
   }

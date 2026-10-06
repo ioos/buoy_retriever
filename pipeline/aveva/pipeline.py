@@ -241,7 +241,10 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
 
         return qartod_pipeline_ds(context, monthly_ds, dataset.config.qartod_config)
 
-    dataset_assets = [daily_df, monthly_ds, qartod_ds]
+    dataset_assets = [daily_df, monthly_ds]
+
+    if dataset.config.qartod_config is not None:
+        dataset_assets.append(qartod_ds)
 
     return dg.Definitions(
         assets=dataset_assets,

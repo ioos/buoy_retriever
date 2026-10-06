@@ -152,13 +152,13 @@ class RateOfChange(QartodTestDefinition):
         update_threshold = self.threshold_type == "std"
 
         thresholds_args = {
-            "threshold": self.threshold * kwargs["std"]
+            "threshold": (self.threshold * kwargs["std"]) / kwargs["deltat"]
             if update_threshold
             else self.threshold,
         }
         if self.fail_threshold is not None:
             thresholds_args["fail_threshold"] = (
-                self.fail_threshold * kwargs["std"]
+                (self.fail_threshold * kwargs["std"]) / kwargs["deltat"]
                 if update_threshold
                 else self.fail_threshold
             )
@@ -217,7 +217,7 @@ class ClimatologyPeriodConfig(BaseModel):
             {
                 "vspan": list(self.vspan),
                 "tspan": list(self.tspan),
-                "zspan": None,
+                "zspan": self.zspan,
             }
             | ({"fspan": list(self.fspan)} if self.fspan is not None else {})
             | ({"period": self.period} if self.period is not None else {})
@@ -267,10 +267,10 @@ class QartodConfig(BaseModel):
         monthly standard deviation to calculate their numeric thresholds.
         """
 
-    def to_qartod_config(self, std: float) -> str:
+    def to_qartod_config(self, std: float, deltat: float) -> str:
         qc = {self.variable_name: {"qartod": {}}}
         for var in self.qartod_test_config:
-            qc[self.variable_name]["qartod"] |= var.to_config(std=std)
+            qc[self.variable_name]["qartod"] |= var.to_config(std=std, deltat=deltat)
 
         return qc
 

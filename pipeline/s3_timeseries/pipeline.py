@@ -308,7 +308,10 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
             latest_key_dt = max(key.get("LastModified") for key in new_s3_keys)
             context.update_cursor(latest_key_dt.isoformat())
 
-    dataset_assets = [daily_df, monthly_ds, qartod_ds]
+    dataset_assets = [daily_df, monthly_ds]
+
+    if dataset.config.qartod_config is not None:
+        dataset_assets.append(qartod_ds)
 
     return dg.Definitions(
         assets=dataset_assets,

@@ -20,7 +20,7 @@ def defs(dataset_config):
 
 def test_can_build_defs(defs):
     assert defs is not None
-    assert len(defs.assets) == 3
+    assert len(defs.assets) == 2
 
 
 def test_sensor(defs, mocked_s3, s3_credentials):
