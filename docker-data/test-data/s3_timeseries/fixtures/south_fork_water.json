@@ -5,13 +5,13 @@
       "slug": "south_fork_water",
       "pipeline": ["s3_timeseries"],
       "state": "Active",
-      "created": "2026-04-08T19:35:35.683Z",
-      "edited": "2026-04-08T19:35:35.683Z"
+      "created": "2026-01-27T18:59:22.661Z",
+      "edited": "2026-03-18T13:58:35.105Z"
     }
   },
   {
     "model": "datasets.datasetconfig",
-    "pk": 24,
+    "pk": 4,
     "fields": {
       "dataset": ["south_fork_water"],
       "config": {
@@ -21,6 +21,48 @@
         },
         "station": "SFW01",
         "latitude": 41.0775,
+        "drop_vars": [
+          "CurrSpd1",
+          "CurrSpd2",
+          "CurrSpd3",
+          "CurrSpd4",
+          "CurrSpd5",
+          "CurrSpd6",
+          "CurrSpd7",
+          "CurrSpd8",
+          "CurrSpd9",
+          "CurrSpd10",
+          "CurrSpd11",
+          "CurrSpd12",
+          "CurrSpd13",
+          "CurrSpd14",
+          "CurrSpd15",
+          "CurrSpd16",
+          "CurrSpd17",
+          "CurrSpd18",
+          "CurrSpd19",
+          "CurrSpd20",
+          "CurrDirTo1",
+          "CurrDirTo2",
+          "CurrDirTo3",
+          "CurrDirTo4",
+          "CurrDirTo5",
+          "CurrDirTo6",
+          "CurrDirTo7",
+          "CurrDirTo8",
+          "CurrDirTo9",
+          "CurrDirTo10",
+          "CurrDirTo11",
+          "CurrDirTo12",
+          "CurrDirTo13",
+          "CurrDirTo14",
+          "CurrDirTo15",
+          "CurrDirTo16",
+          "CurrDirTo17",
+          "CurrDirTo18",
+          "CurrDirTo19",
+          "CurrDirTo20"
+        ],
         "longitude": -71.1855,
         "s3_source": {
           "bucket": "ott-south-fork-wind",
@@ -59,62 +101,74 @@
         "file_pattern": {
           "day_pattern": "SFW01_WB_02_current_{partition_date:%Y%m%d}_*.txt"
         },
+        "qartod_config": [
+          {
+            "variable_name": "ZCel_WTmp",
+            "qartod_test_config": [
+              {
+                "fail_span": [-5, 45],
+                "test_name": "gross_range_test",
+                "suspect_span": [-2, 35]
+              },
+              {
+                "test_name": "rate_of_change_test",
+                "threshold": 3,
+                "fail_threshold": 4,
+                "threshold_type": "std"
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.01,
+                "fail_threshold": 21600,
+                "suspect_threshold": 10800
+              },
+              {
+                "config": [
+                  {
+                    "fspan": [-1, 12],
+                    "tspan": [0, 1],
+                    "vspan": [5, 20],
+                    "period": "quarter"
+                  },
+                  {
+                    "fspan": [2, 24],
+                    "tspan": [1, 2],
+                    "vspan": [5, 20],
+                    "period": "quarter"
+                  },
+                  {
+                    "fspan": [12, 33],
+                    "tspan": [2, 3],
+                    "vspan": [5, 20],
+                    "period": "quarter"
+                  },
+                  {
+                    "fspan": [3, 25],
+                    "tspan": [3, 4],
+                    "vspan": [5, 20],
+                    "period": "quarter"
+                  }
+                ],
+                "test_name": "climatology_test"
+              }
+            ]
+          }
+        ],
         "variable_mappings": [
           {
             "output": "time",
             "source": "datetime"
           }
-        ],
-        "variable_converter": [
-          {
-            "column_names": [
-              "CurrSpd1",
-              "CurrSpd2",
-              "CurrSpd3",
-              "CurrSpd4",
-              "CurrSpd5",
-              "CurrSpd6",
-              "CurrSpd7",
-              "CurrSpd8",
-              "CurrSpd9",
-              "CurrSpd10",
-              "CurrSpd11",
-              "CurrSpd12",
-              "CurrSpd13",
-              "CurrSpd14",
-              "CurrSpd15",
-              "CurrSpd16",
-              "CurrSpd17",
-              "CurrSpd18",
-              "CurrSpd19",
-              "CurrSpd20",
-              "CurrDirTo1",
-              "CurrDirTo2",
-              "CurrDirTo3",
-              "CurrDirTo4",
-              "CurrDirTo5",
-              "CurrDirTo6",
-              "CurrDirTo7",
-              "CurrDirTo8",
-              "CurrDirTo9",
-              "CurrDirTo10",
-              "CurrDirTo11",
-              "CurrDirTo12",
-              "CurrDirTo13",
-              "CurrDirTo14",
-              "CurrDirTo15",
-              "CurrDirTo16",
-              "CurrDirTo17",
-              "CurrDirTo18",
-              "CurrDirTo19",
-              "CurrDirTo20"
-            ],
-            "converter_type": "drop"
-          }
         ]
       },
-      "created": "2026-04-08T19:35:35.695Z",
-      "edited": "2026-04-08T19:35:43.482Z",
+      "created": "2026-01-27T18:59:22.684Z",
+      "edited": "2026-10-05T15:25:39.953Z",
       "state": "Published"
     }
   }

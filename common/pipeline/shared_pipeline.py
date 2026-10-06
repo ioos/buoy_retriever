@@ -8,7 +8,7 @@ import xarray as xr
 from pydantic import Field
 
 from common import config
-from common.config import attributes, mappings
+from common.config import attributes, mappings, qartod_config
 
 
 class BaseTimeseriesConfig(
@@ -17,6 +17,7 @@ class BaseTimeseriesConfig(
     mappings.VariableMappingMixin,
     attributes.AttributeConfigMixin,
     mappings.VariableConverterMixIn,
+    qartod_config.QartodConfigMixIn,
 ):
     """Configuration for Timeseries Dataset."""
 

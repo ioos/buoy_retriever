@@ -5,13 +5,13 @@
       "slug": "south_fork_waves",
       "pipeline": ["s3_timeseries"],
       "state": "Active",
-      "created": "2026-04-08T19:36:09.269Z",
-      "edited": "2026-04-08T19:36:09.269Z"
+      "created": "2026-01-29T15:46:42.737Z",
+      "edited": "2026-03-18T13:58:11.593Z"
     }
   },
   {
     "model": "datasets.datasetconfig",
-    "pk": 25,
+    "pk": 5,
     "fields": {
       "dataset": ["south_fork_waves"],
       "config": {
@@ -83,7 +83,7 @@
             "TzSea": {
               "name": "mean_wave_period_sea",
               "units": "seconds",
-              "long_name": "mean period wind sea component",
+              "long_name": "mean period wind sea compoonent",
               "instrument": "Seaview SVS-603b",
               "standard_name": "sea_surface_wind_wave_mean_period"
             },
@@ -171,6 +171,244 @@
         "file_pattern": {
           "day_pattern": "SFW01_WB_02_wave_{partition_date:%Y%m%d}_*.txt"
         },
+        "qartod_config": [
+          {
+            "variable_name": "Hs",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 12],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 8]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.01,
+                "fail_threshold": 21600,
+                "suspect_threshold": 10800
+              }
+            ]
+          },
+          {
+            "variable_name": "Hmax",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 20],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 12]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.01,
+                "fail_threshold": 21600,
+                "suspect_threshold": 10800
+              }
+            ]
+          },
+          {
+            "variable_name": "Tp",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 22]
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.05,
+                "fail_threshold": 43200,
+                "suspect_threshold": 21600
+              }
+            ]
+          },
+          {
+            "variable_name": "Tz",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 25],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 18]
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.05,
+                "fail_threshold": 43200,
+                "suspect_threshold": 21600
+              }
+            ]
+          },
+          {
+            "variable_name": "Wdir",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 360],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 360]
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 1.0,
+                "fail_threshold": 43200,
+                "suspect_threshold": 21600
+              }
+            ]
+          },
+          {
+            "variable_name": "HsSea",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 12],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 8]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.01,
+                "fail_threshold": 21600,
+                "suspect_threshold": 10800
+              }
+            ]
+          },
+          {
+            "variable_name": "TpSea",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 22]
+              }
+            ]
+          },
+          {
+            "variable_name": "TzSea",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 25],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 18]
+              }
+            ]
+          },
+          {
+            "variable_name": "WdirSea",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 360],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 360]
+              }
+            ]
+          },
+          {
+            "variable_name": "HsSwell1",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 12],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 8]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              }
+            ]
+          },
+          {
+            "variable_name": "TpSwell1",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 25]
+              }
+            ]
+          },
+          {
+            "variable_name": "TzSwell1",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 22]
+              }
+            ]
+          },
+          {
+            "variable_name": "WdirSwell1",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 360],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 360]
+              }
+            ]
+          },
+          {
+            "variable_name": "HsSwell2",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 12],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 8]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              }
+            ]
+          },
+          {
+            "variable_name": "TpSwell2",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 25]
+              }
+            ]
+          },
+          {
+            "variable_name": "TzSwell2",
+            "qartod_test_config": [
+              {
+                "fail_span": [1, 30],
+                "test_name": "gross_range_test",
+                "suspect_span": [2, 22]
+              }
+            ]
+          },
+          {
+            "variable_name": "WdirSwell2",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 360],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 360]
+              }
+            ]
+          }
+        ],
         "variable_mappings": [
           {
             "output": "time",
@@ -178,8 +416,8 @@
           }
         ]
       },
-      "created": "2026-04-08T19:36:09.281Z",
-      "edited": "2026-04-08T19:36:16.079Z",
+      "created": "2026-01-29T15:46:42.759Z",
+      "edited": "2026-10-05T16:40:07.246Z",
       "state": "Published"
     }
   }
