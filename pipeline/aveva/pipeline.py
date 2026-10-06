@@ -10,6 +10,7 @@ from pydantic import Field
 
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
+from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 from common.pipeline.shared_pipeline import BaseTimeseriesConfig
 from common.sentry import SentryConfig
 
@@ -47,6 +48,17 @@ class AvevaTimeseriesDataset(config.DatasetBase):
             + "/"
             + self.slug
             + "_{partition_key_dt:%Y-%m}.nc"
+        )
+
+    def qartod_partition_path(self):
+        """Path to qartod partitions."""
+
+        return (
+            self.safe_slug
+            # + "/monthly/{partition_key_dt:%Y}/"
+            + "/"
+            + self.slug
+            + "_{partition_key_dt:%Y-%m}_qartod.nc"
         )
 
 
@@ -200,7 +212,39 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
 
         return dataset.config.monthly_pipeline_ds(context, daily_df, None)
 
+    @dg.asset(
+        ins={
+            "monthly_ds": dg.AssetIn(
+                partition_mapping=dg.TimeWindowPartitionMapping(
+                    allow_nonexistent_upstream_partitions=True,
+                ),
+                metadata={io.ALLOW_MISSING_PARTITIONS: True},
+            ),
+        },
+        partitions_def=monthly_partitions,
+        metadata={
+            io.DESIRED_PATH: dataset.qartod_partition_path(),
+        },
+        automation_condition=assets.auto_condition_eager_allow_missing(),
+        **io.NETCDF_ASSET_KWARGS,
+        **common_asset_kwargs,
+    )
+    @sentry.capture_op_exceptions
+    def qartod_ds(
+        context: dg.AssetExecutionContext,
+        monthly_ds: xr.Dataset,
+    ) -> xr.Dataset:
+        """Run the configured QARTOD tests on the monthly netCDF."""
+        context.log.info(
+            f"Qartod for  data for {monthly_ds}",
+        )
+
+        return qartod_pipeline_ds(context, monthly_ds, dataset.config.qartod_config)
+
     dataset_assets = [daily_df, monthly_ds]
+
+    if dataset.config.qartod_config is not None:
+        dataset_assets.append(qartod_ds)
 
     return dg.Definitions(
         assets=dataset_assets,

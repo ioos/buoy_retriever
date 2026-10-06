@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
 from common.config import s3_source
+from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 from common.pipeline.shared_pipeline import BaseTimeseriesConfig
 from common.readers.pandas_csv import PandasCSVReader
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
@@ -77,6 +78,17 @@ class S3TimeseriesDataset(config.DatasetBase):
             + "/"
             + self.slug
             + "_{partition_key_dt:%Y-%m}.nc"
+        )
+
+    def qartod_partition_path(self):
+        """Path to qartod partitions."""
+
+        return (
+            self.safe_slug
+            # + "/monthly/{partition_key_dt:%Y}/"
+            + "/"
+            + self.slug
+            + "_{partition_key_dt:%Y-%m}_qartod.nc"
         )
 
 
@@ -182,6 +194,35 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
 
         return dataset.config.monthly_pipeline_ds(context, daily_df, "NAN")
 
+    @dg.asset(
+        ins={
+            "monthly_ds": dg.AssetIn(
+                partition_mapping=dg.TimeWindowPartitionMapping(
+                    allow_nonexistent_upstream_partitions=True,
+                ),
+                metadata={io.ALLOW_MISSING_PARTITIONS: True},
+            ),
+        },
+        partitions_def=monthly_partitions,
+        metadata={
+            io.DESIRED_PATH: dataset.qartod_partition_path(),
+        },
+        automation_condition=assets.auto_condition_eager_allow_missing(),
+        **io.NETCDF_ASSET_KWARGS,
+        **common_asset_kwargs,
+    )
+    @sentry.capture_op_exceptions
+    def qartod_ds(
+        context: dg.AssetExecutionContext,
+        monthly_ds: xr.Dataset,
+    ) -> xr.Dataset:
+        """Run the configured QARTOD tests on the monthly netCDF."""
+        context.log.info(
+            f"Qartod for  data for {monthly_ds}",
+        )
+
+        return qartod_pipeline_ds(context, monthly_ds, dataset.config.qartod_config)
+
     daily_job = dg.define_asset_job(
         f"update_{dataset.safe_slug}_daily",
         selection=[daily_df],
@@ -268,6 +309,9 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
             context.update_cursor(latest_key_dt.isoformat())
 
     dataset_assets = [daily_df, monthly_ds]
+
+    if dataset.config.qartod_config is not None:
+        dataset_assets.append(qartod_ds)
 
     return dg.Definitions(
         assets=dataset_assets,

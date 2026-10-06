@@ -5,13 +5,13 @@
       "slug": "south_fork_currents",
       "pipeline": ["s3_timeseries"],
       "state": "Active",
-      "created": "2026-04-08T19:35:09.827Z",
-      "edited": "2026-04-08T19:35:09.827Z"
+      "created": "2026-01-27T14:44:23.134Z",
+      "edited": "2026-03-18T13:58:57.782Z"
     }
   },
   {
     "model": "datasets.datasetconfig",
-    "pk": 23,
+    "pk": 3,
     "fields": {
       "dataset": ["south_fork_currents"],
       "config": {
@@ -72,166 +72,197 @@
         "file_pattern": {
           "day_pattern": "SFW01_WB_02_current_{partition_date:%Y%m%d}_*.txt"
         },
+        "profile_data": [
+          {
+            "depth": 1.0,
+            "mappings": {
+              "CurrSpd1": "CurrSpd",
+              "CurrDirTo1": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 4.0,
+            "mappings": {
+              "CurrSpd2": "CurrSpd",
+              "CurrDirTo2": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 6.0,
+            "mappings": {
+              "CurrSpd3": "CurrSpd",
+              "CurrDirTo3": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 8.0,
+            "mappings": {
+              "CurrSpd4": "CurrSpd",
+              "CurrDirTo4": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 10.0,
+            "mappings": {
+              "CurrSpd5": "CurrSpd",
+              "CurrDirTo5": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 12.0,
+            "mappings": {
+              "CurrSpd6": "CurrSpd",
+              "CurrDirTo6": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 14.0,
+            "mappings": {
+              "CurrSpd7": "CurrSpd",
+              "CurrDirTo7": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 16.0,
+            "mappings": {
+              "CurrSpd8": "CurrSpd",
+              "CurrDirTo8": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 18.0,
+            "mappings": {
+              "CurrSpd9": "CurrSpd",
+              "CurrDirTo9": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 20.0,
+            "mappings": {
+              "CurrSpd10": "CurrSpd",
+              "CurrDirTo10": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 22.0,
+            "mappings": {
+              "CurrSpd11": "CurrSpd",
+              "CurrDirTo11": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 24.0,
+            "mappings": {
+              "CurrSpd12": "CurrSpd",
+              "CurrDirTo12": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 26.0,
+            "mappings": {
+              "CurrSpd13": "CurrSpd",
+              "CurrDirTo13": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 28.0,
+            "mappings": {
+              "CurrSpd14": "CurrSpd",
+              "CurrDirTo14": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 30.0,
+            "mappings": {
+              "CurrSpd15": "CurrSpd",
+              "CurrDirTo15": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 32.0,
+            "mappings": {
+              "CurrSpd16": "CurrSpd",
+              "CurrDirTo16": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 34.0,
+            "mappings": {
+              "CurrSpd17": "CurrSpd",
+              "CurrDirTo17": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 36.0,
+            "mappings": {
+              "CurrSpd18": "CurrSpd",
+              "CurrDirTo18": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 38.0,
+            "mappings": {
+              "CurrSpd19": "CurrSpd",
+              "CurrDirTo19": "CurrDirTo"
+            }
+          },
+          {
+            "depth": 40.0,
+            "mappings": {
+              "CurrSpd20": "CurrSpd",
+              "CurrDirTo20": "CurrDirTo"
+            }
+          }
+        ],
+        "qartod_config": [
+          {
+            "variable_name": "CurrDirTo",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 360],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 360]
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.354,
+                "fail_threshold": 3000,
+                "suspect_threshold": 1800
+              }
+            ]
+          },
+          {
+            "variable_name": "CurrSpd",
+            "qartod_test_config": [
+              {
+                "fail_span": [0, 5],
+                "test_name": "gross_range_test",
+                "suspect_span": [0, 4]
+              },
+              {
+                "test_name": "spike_test",
+                "fail_threshold": 4,
+                "threshold_type": "std",
+                "suspect_threshold": 3
+              },
+              {
+                "test_name": "flat_line_test",
+                "tolerance": 0.01,
+                "fail_threshold": 21600,
+                "suspect_threshold": 10800
+              }
+            ]
+          }
+        ],
         "variable_mappings": [
           {
             "output": "time",
             "source": "datetime"
           }
-        ],
-        "variable_converter": [
-          {
-            "column_names": ["ZCel_WTmp"],
-            "converter_type": "drop"
-          },
-          {
-            "profile_data": [
-              {
-                "depth": 1,
-                "mappings": {
-                  "CurrSpd1": "CurrSpd",
-                  "CurrDirTo1": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 4,
-                "mappings": {
-                  "CurrSpd2": "CurrSpd",
-                  "CurrDirTo2": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 6,
-                "mappings": {
-                  "CurrSpd3": "CurrSpd",
-                  "CurrDirTo3": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 8,
-                "mappings": {
-                  "CurrSpd4": "CurrSpd",
-                  "CurrDirTo4": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 10,
-                "mappings": {
-                  "CurrSpd5": "CurrSpd",
-                  "CurrDirTo5": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 12,
-                "mappings": {
-                  "CurrSpd6": "CurrSpd",
-                  "CurrDirTo6": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 14,
-                "mappings": {
-                  "CurrSpd7": "CurrSpd",
-                  "CurrDirTo7": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 16,
-                "mappings": {
-                  "CurrSpd8": "CurrSpd",
-                  "CurrDirTo8": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 18,
-                "mappings": {
-                  "CurrSpd9": "CurrSpd",
-                  "CurrDirTo9": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 20,
-                "mappings": {
-                  "CurrSpd10": "CurrSpd",
-                  "CurrDirTo10": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 22,
-                "mappings": {
-                  "CurrSpd11": "CurrSpd",
-                  "CurrDirTo11": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 24,
-                "mappings": {
-                  "CurrSpd12": "CurrSpd",
-                  "CurrDirTo12": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 26,
-                "mappings": {
-                  "CurrSpd13": "CurrSpd",
-                  "CurrDirTo13": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 28,
-                "mappings": {
-                  "CurrSpd14": "CurrSpd",
-                  "CurrDirTo14": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 30,
-                "mappings": {
-                  "CurrSpd15": "CurrSpd",
-                  "CurrDirTo15": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 32,
-                "mappings": {
-                  "CurrSpd16": "CurrSpd",
-                  "CurrDirTo16": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 34,
-                "mappings": {
-                  "CurrSpd17": "CurrSpd",
-                  "CurrDirTo17": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 36,
-                "mappings": {
-                  "CurrSpd18": "CurrSpd",
-                  "CurrDirTo18": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 38,
-                "mappings": {
-                  "CurrSpd19": "CurrSpd",
-                  "CurrDirTo19": "CurrDirTo"
-                }
-              },
-              {
-                "depth": 40,
-                "mappings": {
-                  "CurrSpd20": "CurrSpd",
-                  "CurrDirTo20": "CurrDirTo"
-                }
-              }
-            ],
-            "converter_type": "profile"
-          }
         ]
       },
-      "created": "2026-04-08T19:35:09.835Z",
-      "edited": "2026-04-08T19:35:16.550Z",
+      "created": "2026-01-27T14:44:23.141Z",
+      "edited": "2026-10-05T15:36:52.049Z",
       "state": "Published"
     }
   }
