@@ -134,6 +134,7 @@ def e2e_stack(shared_fs_dir: Path) -> Iterator[Stack]:
             "-d",
             "--build",
             "--wait",
+            "--quiet-pull",
             *COMPOSE_SERVICES,
             check=False,
         )
