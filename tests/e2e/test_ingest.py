@@ -68,7 +68,7 @@ def _run_job_to_completion(
     )
     assert status == DagsterRunStatus.SUCCESS, (
         f"{job_name} run {run_id} did not succeed: {status}. "
-        f"Check `docker compose -p buoy_retriever_e2e logs hohonu dagster_daemon` for details."
+        f"Check `docker compose -p buoy_retriever_e2e --env-file docker-data/secret.e2e.env logs hohonu dagster_daemon` for details."
     )
 
 

@@ -35,6 +35,8 @@ COMPOSE_SERVICES = (
     "dagster_daemon",
     "dagster_ui",
     "hohonu",
+    "erddapper",
+    "erddap",
 )
 
 # Must match docker-data/secret.e2e.env and docker-compose.e2e.yaml's port overrides.
