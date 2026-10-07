@@ -1,9 +1,11 @@
+import os
 from datetime import date
 from pathlib import Path
 from typing import Annotated
 
 import dagster as dg
 import pandas as pd
+import requests
 import xarray as xr
 from pydantic import Field, ValidationError
 
@@ -13,6 +15,7 @@ from common.sentry import SentryConfig
 from hohonu_api import HohonuApi
 
 sentry = SentryConfig(pipeline_name="hohonu")
+ERDDAPPER_TIMEOUT = int(os.environ.get("ERDDAPPER_TIMEOUT", 60))
 
 
 class HohonuConfig(
@@ -70,6 +73,7 @@ class HohonuDataset(config.DatasetBase):
         )
 
 
+# ruff: noqa: C901
 def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     """Generate Dagster Definitions for a given dataset"""
     common_asset_kwargs = {
@@ -192,6 +196,97 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         """Generate monthly parquet files from monthly xarray datasets (netcdf)"""
         return monthly_ds.to_dataframe()
 
+    @dg.asset(
+        description=f"ERDDAP refresh ping for {dataset.slug}",
+        # automation_condition=assets.auto_condition_eager_allow_missing(),
+        automation_condition=dg.AutomationCondition.any_deps_updated(),
+        partitions_def=monthly_partitions,
+        **common_asset_kwargs,
+    )
+    @sentry.capture_op_exceptions
+    def erddap_ping(
+        context: dg.AssetExecutionContext,
+        monthly_ds: xr.Dataset,
+    ) -> None:
+        # get global dataset metadata from curated metadata source
+        # TODO eventually asset-manager, simple nginx for now
+        # TODO metadata attributes from asset-manager should be used in
+        #      monthly_ds so they end up in the on-disk netCDF files also and
+        #      not just ERDDAP config
+        try:
+            response = requests.get(
+                f"http://erddapper-metadata/{dataset.slug}.json",
+                timeout=5,
+            )
+            response.raise_for_status()
+            ncojson = response.json()
+
+        except requests.exceptions.ConnectionError:
+            # fall back to using buoy retiever global attrs
+            ncojson = {"attributes": monthly_ds.attrs}
+
+        # use monthly_ds variable attributes for now
+        # TODO asset-manager should supply variable attributes
+        def get_erddap_var_type(var_name: str, var: xr.Variable) -> str:
+            """Map xarray dtype to ERDDAP type."""
+            # TODO handle in erddapper?
+            if var.dtype.kind in ["S", "T", "U"]:
+                return "String"
+            try:
+                return {
+                    "float32": "float",
+                    "float64": "double",
+                    "int8": "byte",
+                    "int16": "short",
+                    "int32": "int",
+                    "int64": "long",
+                    "uint8": "ubyte",
+                    "uint16": "ushort",
+                    "uint32": "uint",
+                    "uint64": "ulong",
+                    "bool": "boolean",
+                    "datetime64[ns]": "int64",
+                }[var.dtype.name]
+            except KeyError as e:
+                raise ValueError(
+                    f"Unhandled dtype {var.dtype.name} (kind {var.dtype.kind}) for variable {var_name}",
+                ) from e
+
+        ncojson["variables"] = {
+            var: {
+                "type": get_erddap_var_type(var, monthly_ds.variables[var]),
+                "attributes": monthly_ds.variables[var].attrs,
+            }
+            for var in monthly_ds.variables
+        }
+
+        # set erddapper config
+        ncojson |= {
+            "source_name": "ncojson-inline",
+            "file_type": "nc",
+            "config": {
+                "fileDir": f"/data/datasets/hohonu/{dataset.slug}",
+            },
+        }
+        ncojson["attributes"] |= {
+            "id": dataset.slug,
+            "cdm_data_type": "TimeSeries",
+            "defaultDataQuery": None,
+        }
+
+        # tell erddapper to serve the dataset with the provided ncojson config
+        try:
+            response = requests.post(
+                f"http://erddapper:8080/datasets/{dataset.slug}",
+                json=ncojson,
+                timeout=ERDDAPPER_TIMEOUT,
+            )
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise RuntimeError(
+                f"erddapper request failed with message {response.text}",
+            ) from e
+
     # daily_df and monthly_ds/monthly_parquet use different PartitionsDefinitions,
     # so Dagster can't fold them into one implicit asset job -- without an
     # explicit job here, there'd be no way to launch a run for this dataset's
@@ -202,10 +297,10 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     )
     monthly_job = dg.define_asset_job(
         f"{dataset.safe_slug}_monthly_job",
-        selection=[monthly_ds, monthly_parquet],
+        selection=[monthly_ds, monthly_parquet, erddap_ping],
     )
 
     return dg.Definitions(
-        assets=[daily_df, monthly_ds, monthly_parquet],
+        assets=[daily_df, monthly_ds, monthly_parquet, erddap_ping],
         jobs=[daily_job, monthly_job],
     )

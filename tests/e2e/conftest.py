@@ -27,6 +27,7 @@ from dagster_graphql.client.utils import ReloadRepositoryLocationStatus
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILES = ("-f", "docker-compose.yaml", "-f", "docker-compose.e2e.yaml")
 COMPOSE_PROJECT = "buoy_retriever_e2e"
+COMPOSE_ENV_FILES = ("--env-file", "docker-data/secret.e2e.env")
 COMPOSE_SERVICES = (
     "db",
     "backend",
@@ -34,6 +35,8 @@ COMPOSE_SERVICES = (
     "dagster_daemon",
     "dagster_ui",
     "hohonu",
+    "erddapper",
+    "erddap",
 )
 
 # Must match docker-data/secret.e2e.env and docker-compose.e2e.yaml's port overrides.
@@ -67,7 +70,15 @@ class Stack:
 
 def _compose(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(
-        ["docker", "compose", *COMPOSE_FILES, "-p", COMPOSE_PROJECT, *args],
+        [
+            "docker",
+            "compose",
+            *COMPOSE_FILES,
+            "-p",
+            COMPOSE_PROJECT,
+            *COMPOSE_ENV_FILES,
+            *args,
+        ],
         cwd=REPO_ROOT,
         check=check,
         capture_output=True,
@@ -123,6 +134,7 @@ def e2e_stack(shared_fs_dir: Path) -> Iterator[Stack]:
             "-d",
             "--build",
             "--wait",
+            "--quiet-pull",
             *COMPOSE_SERVICES,
             check=False,
         )

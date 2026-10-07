@@ -16,6 +16,10 @@ core:
 spotlight:
 	docker compose run --rm spotlight
 
+# Start erddap services: erddapper, erddap, erddapper-metadata
+erddap:
+	docker compose up --build erddapper erddap erddapper-metadata
+
 # Stop and remove all containers
 down:
 	docker compose -f docker-compose.yaml down --remove-orphans
@@ -71,7 +75,7 @@ test-s3-timeseries:
 	docker build -f pipeline/s3_timeseries/Dockerfile -t buoy_retriever-s3_timeseries .
 	docker run -v ./docker-data/test-data:/mnt/test-data buoy_retriever-s3_timeseries pixi run pytest --cov=.
 
-e2e_compose_command = docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e
+e2e_compose_command = docker compose -f docker-compose.yaml -f docker-compose.e2e.yaml -p buoy_retriever_e2e --env-file docker-data/secret.e2e.env
 e2e_build_containers = backend dagster_daemon dagster_ui hohonu
 
 # Build the e2e containers
