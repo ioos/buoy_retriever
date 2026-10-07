@@ -27,6 +27,7 @@ from dagster_graphql.client.utils import ReloadRepositoryLocationStatus
 REPO_ROOT = Path(__file__).resolve().parents[2]
 COMPOSE_FILES = ("-f", "docker-compose.yaml", "-f", "docker-compose.e2e.yaml")
 COMPOSE_PROJECT = "buoy_retriever_e2e"
+COMPOSE_SECRET_E2E_ENV = ("--env-file", "docker-data/secret.e2e.env")
 COMPOSE_SERVICES = (
     "db",
     "backend",
@@ -119,6 +120,8 @@ def e2e_stack(shared_fs_dir: Path) -> Iterator[Stack]:
     _teardown()
     try:
         up = _compose(
+            # load env vars from secret.e2e.env so they can be referenced in docker-compose.yaml
+            *COMPOSE_SECRET_E2E_ENV,
             "up",
             "-d",
             "--build",
