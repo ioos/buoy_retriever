@@ -94,11 +94,3 @@ services:
       # tests/e2e/conftest.py points this at a per-run temporary directory
       # so output from one run can never satisfy another run's assertions
       - ${BUOY_RETRIEVER_E2E_SHARED_FS:-./docker-data/shared-fs-e2e}:/mnt/efs/
-
-  erddapper:
-    env_file:
-      - ./docker-data/secret.e2e.env
-
-  erddap:
-    env_file:
-      - ./docker-data/secret.e2e.env
