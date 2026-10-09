@@ -37,7 +37,7 @@ class PipelineApiKey(models.Model):
     """API keys for programmatic access to pipelines"""
 
     id = models.AutoField(primary_key=True)
-    user = models.ForeignKey("account.User", on_delete=models.PROTECT)
+    user = models.ForeignKey("buoy_retriever_account.User", on_delete=models.PROTECT)
     name = models.CharField(max_length=255)
     key_value = models.CharField(max_length=255, unique=True, default=_generate_api_key)
 
