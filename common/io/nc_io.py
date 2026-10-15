@@ -22,5 +22,5 @@ class XarrayNcIoManager(IOManagerBase):
 
     def load_from_path(self, context: InputContext, path: Path):
         """Load a dataset from a given path"""
-        with xr.open_dataset(path) as ds:
+        with xr.open_dataset(path, decode_timedelta=False) as ds:
             return ds

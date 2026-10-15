@@ -26,7 +26,7 @@ def defs(dataset_config):
 @pytest.mark.parametrize(
     "asset_name,created_dt_str",
     [
-        pytest.param("empire_met", "2026-01-05T21:15:24.482Z"),
+        pytest.param("empire_met", "2026-01-09T01:31:15.453Z"),
     ],
 )
 def test_can_build_defs(defs):
@@ -61,7 +61,7 @@ def mocked_s3():
     [
         pytest.param(
             "empire_met",
-            "2026-01-05T21:15:24.482Z",
+            "2026-01-09T01:31:15.453Z",
             "ott-empire",
             "EW01_met_20251112_000500_002000.txt",
             "EW01_met_20251113_235500_010000.txt",
@@ -113,7 +113,7 @@ def test_sensor(
     [
         pytest.param(
             "empire_met",
-            "2026-01-05T21:15:24.530Z",
+            "2026-01-09T01:31:15.453Z",
             "empire_met/test_empire_met_20251113",
             "2025-11-13",
         ),
@@ -143,7 +143,7 @@ def test_sensor(
         ),
         pytest.param(
             "south_fork_currents",
-            "2026-04-08T19:35:09.835Z",
+            "2026-01-27T14:44:23.141Z",
             "south_fork_currents/test_south_fork_currents_20260304",
             "2026-03-04",
         ),
@@ -200,7 +200,7 @@ def test_daily_asset(
     [
         pytest.param(
             "empire_met",
-            "2026-01-05T21:15:24.530Z",
+            "2026-01-09T01:31:15.453Z",
             {
                 "2025-11-13": "empire_met/test_empire_met_20251113.csv",
                 "2025-11-14": "empire_met/test_empire_met_20251114.csv",
@@ -210,7 +210,7 @@ def test_daily_asset(
         ),
         pytest.param(
             "empire_met",
-            "2026-01-05T21:15:24.530Z",
+            "2026-01-09T01:31:15.453Z",
             {
                 "2025-10-12": "empire_met/2025-10-12.csv",
                 "2025-10-13": "empire_met/2025-10-13.csv",
@@ -257,7 +257,7 @@ def test_daily_asset(
         ),
         pytest.param(
             "south_fork_currents",
-            "2026-04-08T19:35:09.835Z",
+            "2026-01-27T14:44:23.141Z",
             {
                 "2026-03-04": "south_fork_currents/test_south_fork_currents_20260304.csv",
             },
@@ -266,7 +266,7 @@ def test_daily_asset(
         ),
         pytest.param(
             "south_fork_waves",
-            "2026-04-08T19:36:09.281Z",
+            "2026-01-29T15:46:42.759Z",
             {
                 "2026-02-21": "south_fork_waves/test_south_fork_waves_20260221.csv",
             },
@@ -275,7 +275,7 @@ def test_daily_asset(
         ),
         pytest.param(
             "south_fork_water",
-            "2026-04-08T19:35:35.695Z",
+            "2026-01-27T18:59:22.684Z",
             {
                 "2026-01-22": "south_fork_water/test_south_fork_water_20260122.csv",
             },
@@ -326,3 +326,7 @@ def test_monthly_asset(
 
     assert isinstance(ds, xr.Dataset)
     nc_io_regression.check(ds, basename=monthly_snapshot_path)
+
+
+# "south_fork_currents/test_south_fork_currents_202603",
+# "2026-03-01",
