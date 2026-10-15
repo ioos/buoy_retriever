@@ -32,7 +32,7 @@ def qartod_pipeline_ds(
 
     q_config = Config(config)
 
-    qc_ds = monthly_ds.coords.to_dataset()
+    # qc_ds = monthly_ds.coords.to_dataset()
 
     is_profile = "depth" in monthly_ds.dims
 
@@ -66,12 +66,12 @@ def qartod_pipeline_ds(
                 var_name = f"{call.stream_id}_{r.test}"
 
                 if is_profile:
-                    if var_name not in qc_ds:
+                    if var_name not in monthly_ds:
                         empty = np.zeros(monthly_ds[call.stream_id].shape)
-                        qc_ds[var_name] = (monthly_ds[call.stream_id].dims, empty)
-                    qc_ds[var_name][:, depth_index] = r.results
+                        monthly_ds[var_name] = (monthly_ds[call.stream_id].dims, empty)
+                    monthly_ds[var_name][:, depth_index] = r.results
 
                 else:
-                    qc_ds[var_name] = (monthly_ds[call.stream_id].dims, r.results)
+                    monthly_ds[var_name] = (monthly_ds[call.stream_id].dims, r.results)
 
-    return qc_ds
+    return

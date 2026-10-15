@@ -10,7 +10,7 @@ class QartodTestDefinition(BaseModel):
     test_name: str
 
     threshold_type: Annotated[
-        str | None,
+        Literal["fixed", "std"] | None,
         Field(
             description="Optional argument that defaults to fixed."
             "Specifies how numeric thresholds are interpreted. "
@@ -269,8 +269,8 @@ class QartodConfig(BaseModel):
 
     def to_qartod_config(self, std: float, deltat: float) -> str:
         qc = {self.variable_name: {"qartod": {}}}
-        for var in self.qartod_test_config:
-            qc[self.variable_name]["qartod"] |= var.to_config(std=std, deltat=deltat)
+        for test in self.qartod_test_config:
+            qc[self.variable_name]["qartod"] |= test.to_config(std=std, deltat=deltat)
 
         return qc
 

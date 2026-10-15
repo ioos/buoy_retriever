@@ -9,6 +9,7 @@ from pydantic import Field
 
 from common import config
 from common.config import attributes, mappings, qartod_config
+from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 
 
 class BaseTimeseriesConfig(
@@ -104,6 +105,7 @@ class BaseTimeseriesConfig(
         context: dg.AssetExecutionContext,
         daily_df: dict[str, pd.DataFrame],
         na_values: None | str | list[str] = None,
+        qartod_config: None | qartod_config.QartodConfig = None,
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
@@ -127,6 +129,8 @@ class BaseTimeseriesConfig(
             },
         )
 
+        if qartod_config is not None:
+            qartod_pipeline_ds(context, ds, qartod_config)
         self.attributes.add_attributes_from_yaml()
 
         self.attributes.apply_to_dataset(ds)
