@@ -8,6 +8,8 @@ import xarray as xr
 from pydantic import Field, ValidationError
 
 from common import assets, config, io
+from common.config import qartod_config
+from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 from common.sentry import SentryConfig
 
 from hohonu_api import HohonuApi
@@ -18,6 +20,7 @@ sentry = SentryConfig(pipeline_name="hohonu")
 class HohonuConfig(
     config.DatasetConfigBase,
     # config.AttributeConfigMixin,
+    qartod_config.QartodConfigMixIn,
 ):
     """Configuration for Hohonu Dataset"""
 
@@ -161,6 +164,9 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         ds["longitude"] = dataset.config.longitude
 
         ds = ds.set_coords(["station", "latitude", "longitude"])
+
+        if dataset.config.qartod_config is not None:
+            qartod_pipeline_ds(context, ds, dataset.config.qartod_config)
 
         common_attrs = config.NcAttributes.from_yaml(
             Path(__file__).parent / "attributes.yaml",

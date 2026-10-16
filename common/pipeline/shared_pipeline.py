@@ -105,7 +105,6 @@ class BaseTimeseriesConfig(
         context: dg.AssetExecutionContext,
         daily_df: dict[str, pd.DataFrame],
         na_values: None | str | list[str] = None,
-        qartod_config: None | qartod_config.QartodConfig = None,
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
@@ -129,8 +128,8 @@ class BaseTimeseriesConfig(
             },
         )
 
-        if qartod_config is not None:
-            qartod_pipeline_ds(context, ds, qartod_config)
+        if self.qartod_config is not None:
+            qartod_pipeline_ds(context, ds, self.qartod_config)
         self.attributes.add_attributes_from_yaml()
 
         self.attributes.apply_to_dataset(ds)
