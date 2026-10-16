@@ -32,8 +32,6 @@ def qartod_pipeline_ds(
 
     q_config = Config(config)
 
-    # qc_ds = monthly_ds.coords.to_dataset()
-
     is_profile = "depth" in monthly_ds.dims
 
     if is_profile:
@@ -73,5 +71,3 @@ def qartod_pipeline_ds(
 
                 else:
                     monthly_ds[var_name] = (monthly_ds[call.stream_id].dims, r.results)
-
-    return
