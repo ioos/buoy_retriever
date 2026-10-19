@@ -8,7 +8,8 @@ import xarray as xr
 from pydantic import Field
 
 from common import config
-from common.config import attributes, mappings
+from common.config import attributes, mappings, qartod_config
+from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 
 
 class BaseTimeseriesConfig(
@@ -17,6 +18,7 @@ class BaseTimeseriesConfig(
     mappings.VariableMappingMixin,
     attributes.AttributeConfigMixin,
     mappings.VariableConverterMixIn,
+    qartod_config.QartodConfigMixIn,
 ):
     """Configuration for Timeseries Dataset."""
 
@@ -126,6 +128,8 @@ class BaseTimeseriesConfig(
             },
         )
 
+        if self.qartod_config is not None:
+            qartod_pipeline_ds(context, ds, self.qartod_config)
         self.attributes.add_attributes_from_yaml()
 
         self.attributes.apply_to_dataset(ds)

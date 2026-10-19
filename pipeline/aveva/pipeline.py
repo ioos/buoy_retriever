@@ -198,7 +198,11 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        return dataset.config.monthly_pipeline_ds(context, daily_df, None)
+        return dataset.config.monthly_pipeline_ds(
+            context,
+            daily_df,
+            na_values=None,
+        )
 
     dataset_assets = [daily_df, monthly_ds]
 

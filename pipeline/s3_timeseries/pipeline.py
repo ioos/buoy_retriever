@@ -180,7 +180,11 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
     ) -> xr.Dataset:
         """Combine daily dataframes into a monthly NetCDF and apply transformations."""
 
-        return dataset.config.monthly_pipeline_ds(context, daily_df, "NAN")
+        return dataset.config.monthly_pipeline_ds(
+            context,
+            daily_df,
+            na_values="NAN",
+        )
 
     daily_job = dg.define_asset_job(
         f"update_{dataset.safe_slug}_daily",
