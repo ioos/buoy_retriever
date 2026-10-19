@@ -15,6 +15,7 @@ on:
       - docker-data/test-data/**,
       - tests/e2e/**
       - .github/workflows/e2e.yml
+      - .python-version
   pull_request:
     paths: *e2e_paths
   workflow_dispatch:
