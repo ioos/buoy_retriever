@@ -184,7 +184,6 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
             context,
             daily_df,
             na_values="NAN",
-            qartod_config=dataset.config.qartod_config,
         )
 
     daily_job = dg.define_asset_job(

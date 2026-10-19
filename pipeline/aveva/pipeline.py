@@ -202,7 +202,6 @@ def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
             context,
             daily_df,
             na_values=None,
-            qartod_config=dataset.config.qartod_config,
         )
 
     dataset_assets = [daily_df, monthly_ds]
