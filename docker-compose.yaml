@@ -205,6 +205,12 @@ services:
       ERDDAPPER_ENABLED_SOURCES: inline:NcoJsonInlineSource
       ERDDAPPER_ALLOWED_DATA_PATHS: /data
       ERDDAPPER_ERDDAP_FLAG_KEY_URL: https://localhost:8443
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1'"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
 
   # this is a fakey placeholder service until asset-manager is integrated,
   # at which point erddapper will get its metadata from the ACDD API endpoint
@@ -233,7 +239,8 @@ services:
       ERDDAP_allowedHosts: "${BUOY_RETRIEVER_ERDDAP_allowedHosts:-}"
       ERDDAP_SYMLINK_DATASETS_XML: "/mnt/datasets/datasets.xml"
     depends_on:
-      - erddapper
+      erddapper:
+        condition: service_healthy
 
 configs:
   erddapper_metadata_nginx_server:
