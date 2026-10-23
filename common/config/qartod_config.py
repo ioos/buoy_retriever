@@ -279,7 +279,7 @@ class QartodConfigMixIn:
     """Mixin to add qartod configurations to a dataset"""
 
     qartod_config: Annotated[
-        list[QartodConfig | None],
+        list[QartodConfig] | None,
         Field(
             description="QARTOD configurations to apply to dataset variables.",
         ),
