@@ -38,6 +38,7 @@ pint = ">=0.25,<0.26"
 pyyaml = ">=6.0.2,<7"
 pyarrow = ">=24.0.0,<25"
 vcrpy = ">=8.3.0,<9"
+dagster-graphql = ">=1.11.11,<2"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = ">=9"

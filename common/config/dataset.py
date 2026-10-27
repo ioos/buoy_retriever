@@ -2,7 +2,10 @@ import json
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Self, TypeVar
+from typing import TYPE_CHECKING, Self, TypeVar
+
+if TYPE_CHECKING:
+    import dagster as dg
 
 from pydantic import BaseModel, Field
 
@@ -37,6 +40,13 @@ class DatasetBase[ConfigT](BaseModel):
     )
 
     config_state: ConfigState = ConfigState.DRAFT
+
+    created: datetime = Field(..., description="Creation timestamp of the dataset")
+    edited: datetime = Field(..., description="Last edited timestamp of the dataset")
+
+    @property
+    def key_prefix(self) -> list[str]:
+        raise NotImplementedError("Subclasses must implement the key_prefix property")
 
     @property
     def safe_slug(self) -> str:
@@ -78,3 +88,50 @@ class DatasetBase[ConfigT](BaseModel):
         }
 
         return cls(**data)
+
+    def config_asset_key(self) -> "dg.AssetKey":
+        """Return the asset key for the dataset config"""
+        import dagster as dg
+
+        return dg.AssetKey(self.key_prefix + ["dataset_config"])
+
+    def config_external_asset(
+        self,
+        group_name: str | None,
+        **kwargs,
+    ) -> "dg.AssetsDefinition":
+        """Return the observable source asset for the dataset config
+
+        The asset must be observable so that observations reported by the
+        subscriber (data version = ``edited`` ISO timestamp) trigger downstream
+        automation conditions. Re-reporting an unchanged version is a no-op.
+        """
+        import dagster as dg
+
+        key = self.config_asset_key()
+        edited = self.edited
+
+        @dg.observable_source_asset(
+            key=key,
+            group_name=group_name,
+        )
+        def config_asset():
+            return dg.ObserveResult(
+                asset_key=key,
+                data_version=dg.DataVersion(edited.isoformat()),
+            )
+
+        return config_asset
+
+    # def metadata_external_asset(
+    #     self,
+    #     group_name: str | None,
+    #     **kwargs,
+    # ) -> "dg.AssetSpec":
+    #     """Return the external asset specification for the metadata of this dataset"""
+    #     import dagster as dg
+
+    #     return dg.AssetSpec(
+    #         key=dg.AssetKey(self.key_prefix + ["asset_metadata"]),
+    #         group_name=group_name,
+    #     )
