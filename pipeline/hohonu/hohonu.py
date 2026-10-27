@@ -46,6 +46,30 @@ class HohonuDataset(config.DatasetBase):
         Field(description="The configuration for the dataset."),
     ]
 
+    @property
+    def key_prefix(self) -> list[str]:
+        return ["Hohonu", self.safe_slug]
+
+    def daily_df_asset_key(self):
+        return self.key_prefix + ["daily_df"]
+
+    def monthly_ds_asset_key(self):
+        return self.key_prefix + ["monthly_ds"]
+
+    def daily_partitions(self):
+        """Generate daily partitions"""
+        return dg.DailyPartitionsDefinition(
+            start_date=self.config.start_date.isoformat(),
+            end_offset=1,
+        )
+
+    def monthly_partitions(self):
+        """Generate monthly partitions"""
+        return dg.MonthlyPartitionsDefinition(
+            start_date=self.config.start_date.strftime("%Y-%m-01"),
+            end_offset=1,
+        )
+
     def daily_csv_partition_path(self):
         """Path to daily partitions"""
         return (
@@ -75,24 +99,21 @@ class HohonuDataset(config.DatasetBase):
 
 def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     """Generate Dagster Definitions for a given dataset"""
-    common_asset_kwargs = {
-        "key_prefix": ["Hohonu", dataset.safe_slug],
+    keyed_asset_kwargs = {
         "group_name": dataset.safe_slug,
     }
+    common_asset_kwargs = {
+        "key_prefix": dataset.key_prefix,
+        **keyed_asset_kwargs,
+    }
 
-    daily_partitions = dg.DailyPartitionsDefinition(
-        start_date=dataset.config.start_date.isoformat(),
-        end_offset=1,
-    )
-    monthly_partitions = dg.MonthlyPartitionsDefinition(
-        start_date=dataset.config.start_date.strftime("%Y-%m-01"),
-        end_offset=1,
-    )
+    config_asset = dataset.config_external_asset(**common_asset_kwargs)
 
     @dg.asset(
-        partitions_def=daily_partitions,
+        partitions_def=dataset.daily_partitions(),
         description=f"Download daily dataframe from Hohonu for {dataset.slug}",
         metadata={io.DESIRED_PATH: dataset.daily_csv_partition_path()},
+        deps=[config_asset],
         **io.CSV_ASSET_KWARGS,
         **common_asset_kwargs,
     )
@@ -129,10 +150,12 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
             ),
         },
         automation_condition=assets.auto_condition_eager_allow_missing(),
-        partitions_def=monthly_partitions,
+        partitions_def=dataset.monthly_partitions(),
         metadata={io.DESIRED_PATH: dataset.monthly_nc_partition_path()},
+        deps=[config_asset],
+        key=dataset.monthly_ds_asset_key(),
+        group_name=dataset.safe_slug,
         **io.NETCDF_ASSET_KWARGS,
-        **common_asset_kwargs,
     )
     @sentry.capture_op_exceptions
     def monthly_ds(
@@ -185,7 +208,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     @dg.asset(
         description=f"Monthly parquet files for {dataset.slug}",
         automation_condition=assets.auto_condition_eager_allow_missing(),
-        partitions_def=monthly_partitions,
+        partitions_def=dataset.monthly_partitions(),
         metadata={io.DESIRED_PATH: dataset.monthly_parquet_partition_path()},
         **io.PARQUET_ASSET_KWARGS,
         **common_asset_kwargs,
@@ -212,6 +235,13 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     )
 
     return dg.Definitions(
-        assets=[daily_df, monthly_ds, monthly_parquet],
+        assets=[config_asset, daily_df, monthly_ds, monthly_parquet],
         jobs=[daily_job, monthly_job],
+        sensors=[
+            dg.AutomationConditionSensorDefinition(
+                name=f"{dataset.safe_slug}_automation_condition_sensor",
+                target=[monthly_ds, monthly_parquet],
+                use_user_code_server=True,
+            ),
+        ],
     )
