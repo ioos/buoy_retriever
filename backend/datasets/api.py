@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
 from ninja import ModelSchema, Router, Schema
+from datetime import datetime
 from ninja.errors import AuthorizationError
 from ninja.security import django_auth
 
@@ -45,8 +46,8 @@ class DatasetWithConfigSchema(Schema):
     slug: str
     config: dict
     config_state: str
-    # created: str
-    # edited: str
+    created: datetime
+    edited: datetime
 
 
 class DatasetCreateSchema(ModelSchema):
@@ -190,6 +191,8 @@ def get_configs_by_pipeline(request: HttpRequest, pipeline_slug: str):
         dataset_dict = dataset.dict()
         dataset_dict["config"] = config.config
         dataset_dict["config_state"] = config.state
+        dataset_dict["created"] = config.created
+        dataset_dict["edited"] = config.edited
 
         if config.state == DatasetConfig.State.TESTING:
             dataset_dict["slug"] += "_testing"

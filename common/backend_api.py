@@ -1,3 +1,4 @@
+import os
 from typing import Annotated
 
 import httpx
@@ -36,11 +37,14 @@ class BackendAPIClient(BaseModel):
         return {"X-API-KEY": self.api_key}
 
     def register_pipeline(self, pipeline: PipelineConfig):
-        """Create or update a pipeline configuration"""
+        """Create or update a pipeline configuration when run by a code server"""
         with sentry_sdk.start_span(
             op="register_pipeline",
             name=f"Register pipeline {pipeline.slug}",
         ):
+            # Exit early from runs rather than registering the pipeline multiple times
+            if os.environ.get("DAGSTER_RUN_JOB_NAME", ""):
+                return
             json = pipeline.to_json()
 
             url = self.api_endpoint + "pipelines/"
