@@ -9,12 +9,14 @@ from pydantic import Field, ValidationError
 
 from common import assets, config, io
 from common.config import qartod_config
+from common.pipeline.erddap_pipeline import reload_erddap_dataset
 from common.pipeline.qartod_pipeline import qartod_pipeline_ds
 from common.sentry import SentryConfig
 
 from hohonu_api import HohonuApi
 
-sentry = SentryConfig(pipeline_name="hohonu")
+pipeline_slug = "hohonu"
+sentry = SentryConfig(pipeline_name=pipeline_slug)
 
 
 class HohonuConfig(
@@ -73,6 +75,7 @@ class HohonuDataset(config.DatasetBase):
         )
 
 
+# ruff: noqa: C901
 def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     """Generate Dagster Definitions for a given dataset"""
     common_asset_kwargs = {
@@ -176,6 +179,13 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         )
         common_attrs.apply_to_dataset(ds)
 
+        service_attrs = config.NcAttributes.from_metadata_service(dataset.slug)
+        if service_attrs:
+            context.log.info(
+                f"Applying attributes from metadata service: {service_attrs}",
+            )
+            service_attrs.apply_to_dataset(ds)
+
         ds["time"].encoding.update(
             {"units": "seconds since 1970-01-01T00:00:00Z", "calendar": "gregorian"},
         )
@@ -198,6 +208,25 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
         """Generate monthly parquet files from monthly xarray datasets (netcdf)"""
         return monthly_ds.to_dataframe()
 
+    @dg.asset(
+        description=f"ERDDAP dataset reload for {dataset.slug}",
+        automation_condition=dg.AutomationCondition.any_deps_updated(),
+        partitions_def=monthly_partitions,
+        **common_asset_kwargs,
+    )
+    @sentry.capture_op_exceptions
+    def erddap_reload(
+        context: dg.AssetExecutionContext,
+        monthly_ds: xr.Dataset,
+    ) -> None:
+        reload_erddap_dataset(
+            context,
+            pipeline_slug,
+            dataset.slug,
+            dataset.safe_slug,
+            monthly_ds,
+        )
+
     # daily_df and monthly_ds/monthly_parquet use different PartitionsDefinitions,
     # so Dagster can't fold them into one implicit asset job -- without an
     # explicit job here, there'd be no way to launch a run for this dataset's
@@ -208,10 +237,10 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     )
     monthly_job = dg.define_asset_job(
         f"{dataset.safe_slug}_monthly_job",
-        selection=[monthly_ds, monthly_parquet],
+        selection=[monthly_ds, monthly_parquet, erddap_reload],
     )
 
     return dg.Definitions(
-        assets=[daily_df, monthly_ds, monthly_parquet],
+        assets=[daily_df, monthly_ds, monthly_parquet, erddap_reload],
         jobs=[daily_job, monthly_job],
     )

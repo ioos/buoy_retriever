@@ -48,7 +48,7 @@ def defs(dataset):
 
 def test_can_build_defs(defs):
     assert defs is not None
-    assert len(defs.assets) == 3
+    assert len(defs.assets) == 4
 
 
 @pytest.mark.vcr(TEST_DATA_DIR / "cassettes/test_hohonu_pipeline/test_daily_asset.yaml")

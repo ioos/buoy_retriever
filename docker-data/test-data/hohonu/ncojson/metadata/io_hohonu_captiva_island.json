@@ -1,0 +1,590 @@
+{
+  "attributes": {
+    "cdm_data_type": {
+      "type": "char",
+      "data": "TimeSeries"
+    },
+    "cdm_timeseries_variables": {
+      "type": "char",
+      "data": "station,longitude,latitude"
+    },
+    "contributor_email": {
+      "type": "char",
+      "data": "managing@asbpa.org,communications@secoora.org,jdorton@secoora.org"
+    },
+    "contributor_name": {
+      "type": "char",
+      "data": "American Shore & Beach Preservation Association (ASBPA),Southeast Coastal Ocean Observing Regional Association (SECOORA),Southeast Water Level Network"
+    },
+    "contributor_role": {
+      "type": "char",
+      "data": "funder,funder,sponsor"
+    },
+    "contributor_role_vocabulary": {
+      "type": "char",
+      "data": "https://vocab.nerc.ac.uk/collection/G04/current/"
+    },
+    "contributor_url": {
+      "type": "char",
+      "data": "https://asbpa.org/,https://secoora.org/,https://secoora.org/southeast-water-level-network/"
+    },
+    "Conventions": {
+      "type": "char",
+      "data": "IOOS-1.2, CF-1.6, ACDD-1.3"
+    },
+    "creator_country": {
+      "type": "char",
+      "data": "United States"
+    },
+    "creator_institution": {
+      "type": "char",
+      "data": "Hohonu"
+    },
+    "creator_name": {
+      "type": "char",
+      "data": "Hohonu"
+    },
+    "creator_sector": {
+      "type": "char",
+      "data": "industry"
+    },
+    "creator_type": {
+      "type": "char",
+      "data": "institution"
+    },
+    "creator_url": {
+      "type": "char",
+      "data": "https://www.hohonu.io/"
+    },
+    "defaultDataQuery": {
+      "type": "char",
+      "data": "water_surface_above_station_datum_qc_agg,water_surface_above_station_datum,z,time&time>=max(time)-3days"
+    },
+    "Easternmost_Easting": {
+      "type": "double",
+      "data": -82.1882
+    },
+    "featureType": {
+      "type": "char",
+      "data": "TimeSeries"
+    },
+    "geospatial_lat_max": {
+      "type": "double",
+      "data": 26.5204
+    },
+    "geospatial_lat_min": {
+      "type": "double",
+      "data": 26.5204
+    },
+    "geospatial_lat_units": {
+      "type": "char",
+      "data": "degrees_north"
+    },
+    "geospatial_lon_max": {
+      "type": "double",
+      "data": -82.1882
+    },
+    "geospatial_lon_min": {
+      "type": "double",
+      "data": -82.1882
+    },
+    "geospatial_lon_units": {
+      "type": "char",
+      "data": "degrees_east"
+    },
+    "geospatial_vertical_max": {
+      "type": "double",
+      "data": 0
+    },
+    "geospatial_vertical_min": {
+      "type": "double",
+      "data": 0
+    },
+    "geospatial_vertical_positive": {
+      "type": "char",
+      "data": "up"
+    },
+    "geospatial_vertical_units": {
+      "type": "char",
+      "data": "m"
+    },
+    "history": {
+      "type": "char",
+      "data": "Downloaded from Hohonu"
+    },
+    "id": "io_hohonu_captiva_island",
+    "infoUrl": {
+      "type": "char",
+      "data": "https://sensors.ioos.us/#metadata/111560/station"
+    },
+    "institution": {
+      "type": "char",
+      "data": "Hohonu"
+    },
+    "keywords": {
+      "type": "char",
+      "data": "CF:sea_surface_height_above_sea_level, GCMD:Earth Science > Oceans > Sea Surface Topography > Sea Surface Height"
+    },
+    "keywords_vocabulary": {
+      "type": "char",
+      "data": "GCMD:GCMD Science Keywords, CF:NetCDF COARDS Climate and Forecast Standard Names"
+    },
+    "license": {
+      "type": "char",
+      "data": "These data may be used and redistributed for free but they are not intended for legal use since they may contain inaccuracies. For use for publications please reference the regional ocean observing system and/or NOAA. Neither the data provider, regional association, NOAA, nor the United States Government, nor any of their employees or contractors makes any warranty, express or implied, including warranties of merchantability and fitness for a particular purpose, or assumes any legal liability for the accuracy, completeness, or usefulness of this information."
+    },
+    "naming_authority": {
+      "type": "char",
+      "data": "us.ioos"
+    },
+    "Northernmost_Northing": {
+      "type": "double",
+      "data": 26.5204
+    },
+    "platform": {
+      "type": "char",
+      "data": "fixed"
+    },
+    "platform_name": {
+      "type": "char",
+      "data": "Captiva Island, FL"
+    },
+    "platform_vocabulary": {
+      "type": "char",
+      "data": "https://mmisw.org/ont/ioos/platform"
+    },
+    "processing_level": {
+      "type": "char",
+      "data": "These data include the results of quality control tests performed by the data provider"
+    },
+    "publisher_country": {
+      "type": "char",
+      "data": "United States"
+    },
+    "publisher_institution": {
+      "type": "char",
+      "data": "Hohonu"
+    },
+    "publisher_name": {
+      "type": "char",
+      "data": "Hohonu"
+    },
+    "publisher_sector": {
+      "type": "char",
+      "data": "industry"
+    },
+    "publisher_type": {
+      "type": "char",
+      "data": "institution"
+    },
+    "publisher_url": {
+      "type": "char",
+      "data": "https://www.hohonu.io/"
+    },
+    "references": {
+      "type": "char",
+      "data": "https://dashboard.hohonu.io/map-page?station=hohonu-67,,https://www.hohonu.io/_files/ugd/fb3fef_20af53a239ec4f8db6e28c7157d7da75.pdf"
+    },
+    "sourceUrl": {
+      "type": "char",
+      "data": "https://dashboard.hohonu.io/map-page?station=hohonu-67"
+    },
+    "Southernmost_Northing": {
+      "type": "double",
+      "data": 26.5204
+    },
+    "standard_name_vocabulary": {
+      "type": "char",
+      "data": "CF Standard Name Table v93"
+    },
+    "station_id": {
+      "type": "char",
+      "data": "111560"
+    },
+    "summary": {
+      "type": "char",
+      "data": "Timeseries data from 'Captiva Island, FL' (hohonu_10036_captiva_island_fl)"
+    },
+    "time_coverage_end": {
+      "type": "char",
+      "data": "2026-09-23T18:30:00Z"
+    },
+    "time_coverage_start": {
+      "type": "char",
+      "data": "2024-06-19T14:00:00Z"
+    },
+    "title": {
+      "type": "char",
+      "data": "Captiva Island, FL"
+    },
+    "Westernmost_Easting": {
+      "type": "double",
+      "data": -82.1882
+    }
+  },
+  "dimensions": {
+    "row": 0
+  },
+  "variables": {
+    "time": {
+      "shape": ["row"],
+      "type": "double",
+      "attributes": {
+        "_ChunkSizes": {
+          "type": "uint",
+          "data": 512
+        },
+        "_CoordinateAxisType": {
+          "type": "char",
+          "data": "Time"
+        },
+        "actual_range": {
+          "type": "double",
+          "data": [1718805600, 1790188200]
+        },
+        "axis": {
+          "type": "char",
+          "data": "T"
+        },
+        "calendar": {
+          "type": "char",
+          "data": "gregorian"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Time"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Time"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "time"
+        },
+        "time_origin": {
+          "type": "char",
+          "data": "01-JAN-1970 00:00:00"
+        },
+        "units": {
+          "type": "char",
+          "data": "seconds since 1970-01-01T00:00:00Z"
+        }
+      }
+    },
+    "latitude": {
+      "shape": ["row"],
+      "type": "double",
+      "attributes": {
+        "_CoordinateAxisType": {
+          "type": "char",
+          "data": "Lat"
+        },
+        "_FillValue": {
+          "type": "double",
+          "data": null
+        },
+        "actual_range": {
+          "type": "double",
+          "data": [26.5204, 26.5204]
+        },
+        "axis": {
+          "type": "char",
+          "data": "Y"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Location"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Latitude"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "latitude"
+        },
+        "units": {
+          "type": "char",
+          "data": "degrees_north"
+        }
+      }
+    },
+    "longitude": {
+      "shape": ["row"],
+      "type": "double",
+      "attributes": {
+        "_CoordinateAxisType": {
+          "type": "char",
+          "data": "Lon"
+        },
+        "_FillValue": {
+          "type": "double",
+          "data": null
+        },
+        "actual_range": {
+          "type": "double",
+          "data": [-82.1882, -82.1882]
+        },
+        "axis": {
+          "type": "char",
+          "data": "X"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Location"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Longitude"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "longitude"
+        },
+        "units": {
+          "type": "char",
+          "data": "degrees_east"
+        }
+      }
+    },
+    "z": {
+      "shape": ["row"],
+      "type": "double",
+      "attributes": {
+        "_ChunkSizes": {
+          "type": "uint",
+          "data": 512
+        },
+        "_CoordinateAxisType": {
+          "type": "char",
+          "data": "Height"
+        },
+        "_CoordinateZisPositive": {
+          "type": "char",
+          "data": "up"
+        },
+        "_FillValue": {
+          "type": "double",
+          "data": null
+        },
+        "actual_range": {
+          "type": "double",
+          "data": [0, 0]
+        },
+        "axis": {
+          "type": "char",
+          "data": "Z"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Location"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Altitude"
+        },
+        "positive": {
+          "type": "char",
+          "data": "up"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "altitude"
+        },
+        "units": {
+          "type": "char",
+          "data": "m"
+        }
+      }
+    },
+    "water_surface_above_station_datum": {
+      "shape": ["row"],
+      "type": "double",
+      "attributes": {
+        "_ChunkSizes": {
+          "type": "uint",
+          "data": 512
+        },
+        "_FillValue": {
+          "type": "double",
+          "data": -9999
+        },
+        "actual_range": {
+          "type": "double",
+          "data": [-2.65, -0.5]
+        },
+        "ancillary_variables": {
+          "type": "char",
+          "data": "water_surface_above_station_datum_qc_agg water_surface_above_station_datum_qc_tests"
+        },
+        "id": {
+          "type": "char",
+          "data": "1132049"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Sea Level"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Water Level"
+        },
+        "missing_value": {
+          "type": "double",
+          "data": -9999
+        },
+        "platform": {
+          "type": "char",
+          "data": "station"
+        },
+        "short_name": {
+          "type": "char",
+          "data": "sea_surface_height_above_sea_level"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "sea_surface_height_above_sea_level"
+        },
+        "standard_name_url": {
+          "type": "char",
+          "data": "https://vocab.nerc.ac.uk/standard_name/sea_surface_height_above_sea_level/"
+        },
+        "units": {
+          "type": "char",
+          "data": "m"
+        },
+        "vertical_datum": {
+          "type": "char",
+          "data": "Station Datum"
+        }
+      }
+    },
+    "water_surface_above_station_datum_qc_agg": {
+      "shape": ["row"],
+      "type": "int",
+      "attributes": {
+        "_ChunkSizes": {
+          "type": "uint",
+          "data": 4096
+        },
+        "_FillValue": {
+          "type": "int",
+          "data": -127
+        },
+        "actual_range": {
+          "type": "int",
+          "data": [1, 1]
+        },
+        "flag_meanings": {
+          "type": "char",
+          "data": "PASS NOT_EVALUATED SUSPECT FAIL MISSING"
+        },
+        "flag_values": {
+          "type": "int",
+          "data": [1, 2, 3, 4, 9]
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Other"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Water Level QARTOD Aggregate Quality Flag"
+        },
+        "missing_value": {
+          "type": "int",
+          "data": -127
+        },
+        "references": {
+          "type": "char",
+          "data": "https://www.hohonu.io/_files/ugd/fb3fef_20af53a239ec4f8db6e28c7157d7da75.pdf"
+        },
+        "short_name": {
+          "type": "char",
+          "data": "sea_surface_height_above_sea_level_qc_agg"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "aggregate_quality_flag"
+        }
+      }
+    },
+    "water_surface_above_station_datum_qc_tests": {
+      "shape": ["row"],
+      "type": "uint64",
+      "attributes": {
+        "_ChunkSizes": {
+          "type": "uint",
+          "data": 512
+        },
+        "_FillValue": {
+          "type": "uint64",
+          "data": 0
+        },
+        "comment": {
+          "type": "char",
+          "data": "11-character string with results of individual QARTOD tests. 1: Gap Test, 2: Syntax Test, 3: Location Test, 4: Gross Range Test, 5: Climatology Test, 6: Spike Test, 7: Rate of Change Test, 8: Flat-line Test, 9: Multi-variate Test, 10: Attenuated Signal Test, 11: Neighbor Test"
+        },
+        "flag_meanings": {
+          "type": "char",
+          "data": "PASS NOT_EVALUATED SUSPECT FAIL MISSING"
+        },
+        "flag_values": {
+          "type": "int",
+          "data": [1, 2, 3, 4, 9]
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Other"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Water Level QARTOD Individual Tests"
+        },
+        "references": {
+          "type": "char",
+          "data": "https://www.hohonu.io/_files/ugd/fb3fef_20af53a239ec4f8db6e28c7157d7da75.pdf"
+        },
+        "short_name": {
+          "type": "char",
+          "data": "sea_surface_height_above_sea_level_qc_tests"
+        },
+        "standard_name": {
+          "type": "char",
+          "data": "quality_flag"
+        }
+      }
+    },
+    "station": {
+      "shape": ["row"],
+      "type": "byte",
+      "attributes": {
+        "cf_role": {
+          "type": "char",
+          "data": "timeseries_id"
+        },
+        "ioos_category": {
+          "type": "char",
+          "data": "Identifier"
+        },
+        "ioos_code": {
+          "type": "char",
+          "data": "urn:ioos:station:us.ioos:hohonu_10036_captiva_island_fl"
+        },
+        "long_name": {
+          "type": "char",
+          "data": "Captiva Island, FL"
+        },
+        "short_name": {
+          "type": "char",
+          "data": "hohonu_10036_captiva_island_fl"
+        },
+        "type": {
+          "type": "char",
+          "data": "fixed"
+        }
+      }
+    }
+  }
+}

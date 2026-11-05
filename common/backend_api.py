@@ -5,14 +5,15 @@ import sentry_sdk
 from pydantic import BaseModel, Field, ValidationError
 
 from .config import DatasetBase, PipelineConfig
+from .config.env import BACKEND_API_KEY
 
 
 def api_client_key():
-    """Retrieve the backend API key from environment variable"""
-    import os
+    """Check and return BACKEND_API_KEY"""
+    if not BACKEND_API_KEY:
+        raise ValueError("BACKEND_API_KEY must be set.")
 
-    api_key = os.environ["BACKEND_API_KEY"]
-    return api_key
+    return BACKEND_API_KEY
 
 
 class BackendAPIClient(BaseModel):
