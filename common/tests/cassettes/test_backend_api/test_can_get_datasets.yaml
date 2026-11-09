@@ -18,28 +18,31 @@ interactions:
     uri: http://localhost:3000/backend/api/configs/by-pipeline/hohonu/
   response:
     body:
-      string: '[{"slug": "hohonu_bath_me", "config": {"station": "hohonu_bath_me",
-        "latitude": 43.8943, "hohonu_id": "hohonu-118", "longitude": -69.8148, "start_date":
-        "2022-11-08T00:00:00.000Z"}, "config_state": "Published"}, {"slug": "hohonu_bath_me_testing",
-        "config": {"station": "hohonu_bath_me", "latitude": 43.8943, "hohonu_id":
-        "hohonu-118", "longitude": -69.8148, "start_date": "2022-11-08T00:00:00.000Z"},
-        "config_state": "Testing"}, {"slug": "hohonu_boothbay_dmr", "config": {"station":
-        "me_tide_boothbay_harbor_dmr", "latitude": 43.8445, "hohonu_id": "hohonu-169",
-        "longitude": -69.6409, "start_date": "2023-12-06T00:00:00.000Z"}, "config_state":
-        "Published"}]'
+      string: !!binary |
+        H4sIAAAAAAAAA9WU0W7bIBSGX8XiOkYHjB3gKXbhq0QRwoXESLbJAFetorx7hbWmaZe1U7VpneQr
+        9H/nHP7/4O0JxWE+IFmg3vd+mlXnfeo7/ajMGNSop1kPaFWgOz/tXdadUEw6OT9lZrQqOWNfoF6H
+        zofMZmjQyaXZWCQLVmHOWL269HHmpWlJGrHo/XR4BspG4IaBWBW5YUjK6JTPEQValYSW0LQAcvkw
+        AGzQ+TKmyiMu4m9zN7jYW7PcIVidrPlRpCmBlARaoBKYrGrMGrHJMmvcbVUtKcWkoUurn43TqVej
+        /dCz1/IbNglW/comwm/ZxAnjt2yiJSEl8D9gE4iWUlnXkq4xFfx9m5gEhgVhv2OTSjYmNx3+L7va
+        q6Hf2SkguK7gQ7MEZtX6jVnXr/CrPr+MfNcheaMu421P6F4Hp7vBqkmPCzHpe8O5Gm2yIV5BOfpX
+        5F67QcWjznfblhTzVUEx360KtEif6x2Cj1EFPR3sUiOXjHM82rt0TdNM04Xug429H4xKj8elxN49
+        WIPOu/Pukz8NwiRUsq5xw9itgAmUtMoqVkkq8Jq/fQ1X+/w19/5vhws5nvpz4RJcZxr+YbjrlnAJ
+        QjKBKyo26Lx7AqBsqoZLBwAA
     headers:
+      Content-Encoding:
+      - gzip
+      Transfer-Encoding:
+      - chunked
       Vary:
       - origin, Accept-Encoding
       connection:
       - keep-alive
-      content-length:
-      - '657'
       content-type:
       - application/json; charset=utf-8
       cross-origin-opener-policy:
       - same-origin
       date:
-      - Sat, 10 Jan 2026 02:17:45 GMT
+      - Mon, 09 Nov 2026 15:54:12 GMT
       referrer-policy:
       - same-origin
       server:
