@@ -5,10 +5,10 @@ HTTP based subscriber for Hohonu datasets.
 import time
 
 from common.backend_api import BackendAPIClient
-from common.dagster_api import DagsterAPICClient
-from hohonu import HohonuDataset
+from common.dagster_api import DagsterAPIClient
+from hohonu import PIPELINE_SLUG, HohonuDataset
 
-dagster_client = DagsterAPICClient(repository="hohonu")
+dagster_client = DagsterAPIClient(repository=PIPELINE_SLUG)
 
 
 def notify_new_or_updated(ds: HohonuDataset):
@@ -29,7 +29,7 @@ def main():
     client = BackendAPIClient()
 
     while True:
-        datasets = client.datasets_for_pipeline("hohonu", HohonuDataset)
+        datasets = client.datasets_for_pipeline(PIPELINE_SLUG, HohonuDataset)
 
         reload = False
 

@@ -15,8 +15,8 @@ from common.sentry import SentryConfig
 
 from hohonu_api import HohonuApi
 
-pipeline_slug = "hohonu"
-sentry = SentryConfig(pipeline_name=pipeline_slug)
+PIPELINE_SLUG = "hohonu"
+sentry = SentryConfig(pipeline_name=PIPELINE_SLUG)
 
 
 class HohonuConfig(
@@ -244,7 +244,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
     ) -> None:
         reload_erddap_dataset(
             context,
-            pipeline_slug,
+            PIPELINE_SLUG,
             dataset.slug,
             dataset.safe_slug,
             monthly_ds,

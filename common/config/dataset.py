@@ -85,6 +85,8 @@ class DatasetBase[ConfigT](BaseModel):
             "slug": dataset_data["fields"]["slug"],
             "config": config_data["fields"]["config"],
             "config_state": config_data["fields"]["state"],
+            "created": config_data["fields"]["created"],
+            "edited": config_data["fields"]["edited"],
         }
 
         return cls(**data)

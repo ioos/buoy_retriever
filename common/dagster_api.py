@@ -17,7 +17,7 @@ def dagster_endpoint():
     return dagster_base
 
 
-class DagsterAPICClient(BaseModel):
+class DagsterAPIClient(BaseModel):
     """Integrated Dagster REST and GraphQL API client."""
 
     base_url: str = Field(default_factory=dagster_endpoint)
