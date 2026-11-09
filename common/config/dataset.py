@@ -124,16 +124,3 @@ class DatasetBase[ConfigT](BaseModel):
             )
 
         return config_asset
-
-    # def metadata_external_asset(
-    #     self,
-    #     group_name: str | None,
-    #     **kwargs,
-    # ) -> "dg.AssetSpec":
-    #     """Return the external asset specification for the metadata of this dataset"""
-    #     import dagster as dg
-
-    #     return dg.AssetSpec(
-    #         key=dg.AssetKey(self.key_prefix + ["asset_metadata"]),
-    #         group_name=group_name,
-    #     )
