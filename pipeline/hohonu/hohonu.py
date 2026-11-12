@@ -271,6 +271,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
                 name=f"{dataset.safe_slug}_automation_condition_sensor",
                 target=[monthly_ds, monthly_parquet, erddap_reload],
                 use_user_code_server=True,
+                default_status=dg.DefaultSensorStatus.RUNNING
             ),
         ],
     )

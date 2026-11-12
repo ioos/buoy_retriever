@@ -48,8 +48,8 @@ class DagsterAPIClient(BaseModel):
 
     def materialize_assets_for_partitions(
         self,
-        asset_keys: str | list[str] | list[list[str]],
-        partitions: list[str],
+        asset_keys: str | Sequence[str] | Sequence[Sequence[str]],
+        partitions: Sequence[str],
     ) -> dict[str, str]:
         """Trigger materialization of the specified assets for multiple partitions.
 
@@ -64,7 +64,7 @@ class DagsterAPIClient(BaseModel):
 
     def materialize_assets(
         self,
-        asset_keys: str | list[str] | list[list[str]],
+        asset_keys: str | Sequence[str] | Sequence[Sequence[str]],
         partition: str | None = None,
     ) -> str:
         """Trigger materialization of the specified assets, optionally for a given partition.
