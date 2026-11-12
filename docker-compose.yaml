@@ -147,6 +147,7 @@ services:
     volumes:
       - ./pipeline/s3_timeseries:/home/ioos:cached
       - /home/ioos/.pixi
+      - /home/ioos/.cache
       - ./common/:/home/ioos/common/:cached
       - ./docker-data/shared-fs:/mnt/efs/
       - ./docker-data/datasets_config/s3_pipeline/metadata/:/mnt/datasets_config/metadata
@@ -167,6 +168,7 @@ services:
     volumes:
       - ./pipeline/aveva:/home/ioos:cached
       - /home/ioos/.pixi
+      - /home/ioos/.cache
       - ./common/:/home/ioos/common/:cached
       - ./docker-data/shared-fs:/mnt/efs/
     depends_on:
@@ -185,6 +187,7 @@ services:
     volumes:
       - ./pipeline/hohonu:/home/ioos:cached
       - /home/ioos/.pixi
+      - /home/ioos/.cache
       - ./common/:/home/ioos/common/:cached
       - ./docker-data/shared-fs:/mnt/efs/
       - ./docker-data/test-data:/mnt/test-data:cached
