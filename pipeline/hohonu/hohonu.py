@@ -152,7 +152,9 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
                 metadata={io.ALLOW_MISSING_PARTITIONS: True},
             ),
         },
-        automation_condition=assets.auto_condition_eager_allow_missing(),
+        automation_condition=assets.auto_condition_eager_with_upstream_data(
+            dg.AssetSelection.assets(daily_df),
+        ),
         partitions_def=dataset.monthly_partitions(),
         metadata={io.DESIRED_PATH: dataset.monthly_nc_partition_path()},
         deps=[config_asset],
@@ -271,7 +273,7 @@ def defs_for_dataset(dataset: HohonuDataset) -> dg.Definitions:
                 name=f"{dataset.safe_slug}_automation_condition_sensor",
                 target=[monthly_ds, monthly_parquet, erddap_reload],
                 use_user_code_server=True,
-                default_status=dg.DefaultSensorStatus.RUNNING
+                default_status=dg.DefaultSensorStatus.RUNNING,
             ),
         ],
     )

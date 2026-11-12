@@ -192,6 +192,11 @@ services:
       backend:
         condition: service_healthy
 
+  hohonu_subscriber:
+    extends:
+      service: hohonu
+    command: pixi run python subscriber.py
+
   erddapper:
     build: https://github.com/axiom-data-science/erddapper.git#v0.1.0
     ports:

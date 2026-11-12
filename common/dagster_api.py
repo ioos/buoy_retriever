@@ -7,8 +7,24 @@ from collections.abc import Sequence
 from urllib.parse import urlparse
 
 import httpx
+from dagster import AssetKey
 from dagster_graphql import DagsterGraphQLClient
 from pydantic import BaseModel, Field
+
+# A single asset key: an `AssetKey`, a single-part `str`, or a multi-part path.
+# Dagster doesn't export the type from
+# https://github.com/dagster-io/dagster/blob/93e5f51da49420d3e06d9399471070acedb554ca/python_modules/dagster/dagster/_core/definitions/asset_key.py#L186
+CoercibleToAssetKey = AssetKey | str | Sequence[str]
+
+
+def coerce_asset_keys(asset_keys: Sequence[CoercibleToAssetKey]) -> list[AssetKey]:
+    """Normalize a sequence of coercible keys to `AssetKey`s."""
+    if isinstance(asset_keys, (AssetKey, str)):
+        raise TypeError(
+            f"Expected a sequence of asset keys, got {asset_keys!r}. "
+            "Wrap it in a list to select a single key.",
+        )
+    return [AssetKey.from_coercible(key) for key in asset_keys]
 
 
 def dagster_endpoint():
@@ -48,7 +64,7 @@ class DagsterAPIClient(BaseModel):
 
     def materialize_assets_for_partitions(
         self,
-        asset_keys: str | Sequence[str] | Sequence[Sequence[str]],
+        asset_keys: Sequence[CoercibleToAssetKey],
         partitions: Sequence[str],
     ) -> dict[str, str]:
         """Trigger materialization of the specified assets for multiple partitions.
@@ -64,10 +80,15 @@ class DagsterAPIClient(BaseModel):
 
     def materialize_assets(
         self,
-        asset_keys: str | Sequence[str] | Sequence[Sequence[str]],
+        asset_keys: Sequence[CoercibleToAssetKey],
         partition: str | None = None,
     ) -> str:
         """Trigger materialization of the specified assets, optionally for a given partition.
+
+        `asset_keys` is a sequence of keys, where each item is an `AssetKey`, a
+        single-part `str`, or a multi-part `Sequence[str]` path. Note that a flat
+        list of strings is several single-part keys, so wrap a multi-part path in a
+        list: `[["prefix", "name"]]`.
 
         Returns the run ID of the materialization."""
         tags = {}
@@ -78,7 +99,7 @@ class DagsterAPIClient(BaseModel):
             "__ASSET_JOB",
             repository_location_name=self.repository,
             repository_name="__repository__",
-            asset_selection=asset_keys,
+            asset_selection=coerce_asset_keys(asset_keys),
             tags=tags,
         )
         return run_id

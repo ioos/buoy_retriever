@@ -3,26 +3,31 @@ from typing import TypeVar
 
 from pydantic import BaseModel, Field
 
-from .dataset import DatasetBase
-from common.dagster_api import DagsterAPIClient
 from common.backend_api import BackendAPIClient
+from common.dagster_api import DagsterAPIClient
 
-
+from .dataset import DatasetBase
 
 DatasetType = TypeVar("DatasetType", bound=DatasetBase)
 
 
 class Subscriber[DatasetType](BaseModel):
-    dataset_type: type[DatasetType] = Field(..., description="The dataset type this subscriber is associated with")
-    pipeline_slug: str = Field(..., description="The slug of the pipeline this subscriber is associated with")
+    dataset_type: type[DatasetType] = Field(
+        ...,
+        description="The dataset type this subscriber is associated with",
+    )
+    pipeline_slug: str = Field(
+        ...,
+        description="The slug of the pipeline this subscriber is associated with",
+    )
 
     _dagster_api_client: DagsterAPIClient | None = None
     _reloaded: bool = False
 
     def subscribe_loop(self, sleep_seconds: int = 60):
         """Subscribe to dataset updates in a loop.
-        
-        This method continuously checks for updates to dataset configuration, and calls 
+
+        This method continuously checks for updates to dataset configuration, and calls
         `new_config` for new datasets and `updated_config` for updated datasets, which can be overridden as needed.
         """
         datasets = {}
@@ -32,7 +37,10 @@ class Subscriber[DatasetType](BaseModel):
 
         while True:
             # Fetch the latest dataset configurations from the backend
-            new_datasets = backend_client.datasets_for_pipeline(self.pipeline_slug, self.dataset_type)
+            new_datasets = backend_client.datasets_for_pipeline(
+                self.pipeline_slug,
+                self.dataset_type,
+            )
             self._reloaded = False
 
             for ds in new_datasets:
@@ -65,7 +73,10 @@ class Subscriber[DatasetType](BaseModel):
         self.dagster_client().report_observation(
             dataset.config_asset_key().parts,
             dataset.edited.isoformat(),
-            {"last_modified": dataset.edited.isoformat(), "config": dataset.model_dump_json()}
+            {
+                "last_modified": dataset.edited.isoformat(),
+                "config": dataset.model_dump_json(),
+            },
         )
 
     def initial_config(self, dataset: DatasetType):
@@ -83,14 +94,14 @@ class Subscriber[DatasetType](BaseModel):
 
     def updated_config(self, new: DatasetType, old: DatasetType):
         """Handle the event when a dataset is updated.
-        
-        Override and call `self.reload()` if the update requires reloading the full repository, 
+
+        Override and call `self.reload()` if the update requires reloading the full repository,
         such as a change to partitions.
         """
         self.report_config_observation(new)
 
     def dagster_client(self) -> DagsterAPIClient:
-            """Get the Dagster API client for this subscriber."""
-            if self._dagster_api_client is None:
-                self._dagster_api_client = DagsterAPIClient(repository=self.pipeline_slug)
-            return self._dagster_api_client
+        """Get the Dagster API client for this subscriber."""
+        if self._dagster_api_client is None:
+            self._dagster_api_client = DagsterAPIClient(repository=self.pipeline_slug)
+        return self._dagster_api_client
