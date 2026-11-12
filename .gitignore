@@ -215,6 +215,7 @@ __marimo__/
 # Database
 docker-data/postgres
 docker-data/dagster_postgres
+docker-data/asset-docs-db
 
 # Ignore .env files that may contain sensitive information
 docker-data/secret.env

@@ -1,3 +1,4 @@
+from functools import reduce
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -6,7 +7,11 @@ import xarray as xr
 import yaml
 from pydantic import BaseModel, Field
 
-from ..config.env import METADATA_PATH, METADATA_SERVICE_URL
+from ..config.env import (
+    METADATA_PATH,
+    METADATA_SERVICE_NCOJSON_PATH,
+    METADATA_SERVICE_URL,
+)
 from ..ncojson import standardize_ncojson
 
 # Xarray has typed attributes as dict[Any, Any]
@@ -109,7 +114,26 @@ class NcAttributes(BaseModel):
                 raise e
             return
 
-        ncojson = standardize_ncojson(response.json())
+        ncojson = response.json()
+
+        # if METADATA_SERVICE_NCOJSON_PATH is set, use it to extract the
+        # ncoJson documents from the json payload
+        # Example: /0/nco_json gets ncoJson object from [{"nco_json": {...}]
+        if METADATA_SERVICE_NCOJSON_PATH:
+            try:
+                ncojson = reduce(
+                    lambda d, k: d[int(k)] if isinstance(d, list) else d[k],
+                    [
+                        k
+                        for k in METADATA_SERVICE_NCOJSON_PATH.strip("/").split("/")
+                        if k
+                    ],
+                    ncojson,
+                )
+            except (KeyError, IndexError, TypeError, ValueError) as err:
+                raise ValueError(f"Error extracting metadata for {slug}") from err
+
+        ncojson = standardize_ncojson(ncojson)
 
         # remove unwanted global attributes
         if "attributes" in ncojson:

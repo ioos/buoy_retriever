@@ -5,6 +5,7 @@ BACKEND_API_KEY = os.environ.get("BACKEND_API_KEY")
 
 # metadata attribute sources
 METADATA_SERVICE_URL = os.environ.get("METADATA_SERVICE_URL")
+METADATA_SERVICE_NCOJSON_PATH = os.environ.get("METADATA_SERVICE_NCOJSON_PATH")
 METADATA_PATH = os.environ.get("METADATA_PATH", "")
 
 # sentry
