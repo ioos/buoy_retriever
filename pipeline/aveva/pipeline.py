@@ -32,6 +32,10 @@ class AvevaTimeseriesDataset(config.DatasetBase):
         Field(description="The configuration for the dataset."),
     ]
 
+    @property
+    def key_prefix(self):
+        return ["aveva", self.safe_slug]
+
     def daily_partition_path(self):
         """Path to daily partitions."""
         return (
@@ -101,7 +105,7 @@ def build_defs() -> dg.Definitions:
 def defs_for_dataset(dataset: AvevaTimeseriesDataset) -> dg.Definitions:
     """Definitions for a single Aveva Timeseries dataset."""
     common_asset_kwargs = {
-        "key_prefix": ["aveva", dataset.safe_slug],
+        "key_prefix": dataset.key_prefix,
         "group_name": dataset.safe_slug,
     }
     daily_partitions = dg.DailyPartitionsDefinition(
