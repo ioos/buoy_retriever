@@ -31,7 +31,7 @@ def defs(dataset_config):
 )
 def test_can_build_defs(defs):
     assert defs is not None
-    assert len(defs.assets) == 2
+    assert len(defs.assets) == 3
 
 
 @pytest.fixture

@@ -154,6 +154,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  s3_timeseries_subscriber:
+    extends:
+      service: s3_timeseries
+    command: pixi run python subscriber.py
   aveva:
     build:
       context: .
