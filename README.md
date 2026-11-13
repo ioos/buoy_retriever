@@ -50,6 +50,7 @@ Then `make core` to launch the backend, frontend, Dagster and supporting databas
 - `make up` - Launch all Docker services
 - `make down` - Stop all Docker services
 - `make erddap` - Launch erddapper, erddapper-metadata, and ERDDAP services.
+- `make asset-manager` - Launch asset-docs-db, asset-docs-postgrest, and asset-manager services.
 - `make migrations` - Generate new Django database migration files
 - `make migrate` - run all Django database migrations
 - `make prune` - Remove old Docker images and other debris hanging around (system wide, not just buoy retriever!)

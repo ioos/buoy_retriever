@@ -245,6 +245,65 @@ services:
       erddapper:
         condition: service_healthy
 
+  #https://github.com/axiom-data-science/asset-docs-postgres-db
+  asset-docs-db:
+    build: https://github.com/axiom-data-science/asset-docs-postgres-db.git#main
+    environment:
+      POSTGRES_PASSWORD: "${BUOY_RETRIEVER_ADDB_POSTGRES_PASSWORD:-set-me-to-something-secure}"
+      ADDB_PASSWORD: "${BUOY_RETRIEVER_ADDB_OWNER_USER_PASSWORD:-set-me-to-something-secure}"
+      ADDB_POSTGREST_USER_PASSWORD: "${BUOY_RETRIEVER_ADDB_POSTGREST_USER_PASSWORD:-set-me-to-something-secure}"
+      ADDB_READ_USER_PASSWORD: "${BUOY_RETRIEVER_ADDB_READ_USER_PASSWORD:-set-me-to-something-secure}"
+      ADDB_RW_USER_PASSWORD: "${BUOY_RETRIEVER_ADDB_RW_USER_PASSWORD:-set-me-to-something-secure}"
+      ADDB_RUN_POSTINIT_ON_INITDB: "true"
+    ports:
+     - "${BUOY_RETRIEVER_ADDB_PORT:-2345}:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "asset_docs_owner", "--dbname", "asset_docs" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+    volumes:
+      - ./docker-data/asset-docs-db:/var/lib/postgresql:rw
+
+  asset-docs-postgrest:
+    image: "postgrest/postgrest:v13.0.4"
+    environment:
+      PGRST_DB_URI: postgresql://asset_docs_postgrest_user:${BUOY_RETRIEVER_ADDB_POSTGREST_USER_PASSWORD}@asset-docs-db:5432/asset_docs
+      PGRST_DB_SCHEMAS: "asset_docs"
+      PGRST_DB_ANON_ROLE: "asset_docs_read_user"
+      PGRST_JWT_SECRET: "${BUOY_RETRIEVER_ADDB_PGRST_JWT_SECRET:-set-me-to-jwks-json-string}"
+      PGRST_JWT_ROLE_CLAIM_KEY: '.roles[?(@ == "asset_docs_rw_user")]'
+      PGRST_JWT_AUD: "${BUOY_RETRIEVER_ADDB_PGRST_JWT_REQUIRED_AUDIENCE:-set-to-jwt-aud}"
+      PGRST_LOG_LEVEL: "debug"
+      PGRST_LOG_QUERY: "main-query"
+      PGRST_DB_AGGREGATES_ENABLED: "true"
+      PGRST_DB_PRE_REQUEST: "asset_docs_private.upsert_person"
+    ports:
+      - "${BUOY_RETRIEVER_ADDB_PGRST_PORT:-3345}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+
+  #https://github.com/axiom-data-science/asset-manager
+  asset-manager:
+    build: https://github.com/axiom-data-science/asset-manager.git#main
+    environment:
+      TWOWOLVES_OIDC_AUTHORITY: >-
+        ${BUOY_RETRIEVER_ASSET_MANAGER_OIDC_AUTHORITY:-https://ego.axds.co/application/o/asset-docs/}
+      TWOWOLVES_OIDC_CLIENT_ID: "${BUOY_RETRIEVER_ADDB_PGRST_JWT_REQUIRED_AUDIENCE:-set-me}"
+      TWOWOLVES_OIDC_REDIRECT_URI: >-
+        ${BUOY_RETRIEVER_ASSET_MANAGER_OIDC_REDIRECT_URI:-http://localhost:${BUOY_RETRIEVER_ASSET_MANAGER_PORT:-9797}/authed}
+      TWOWOLVES_OIDC_POST_LOGOUT_REDIRECT_URI: >-
+        ${BUOY_RETRIEVER_ASSET_MANAGER_OIDC_POST_LOGOUT_REDIRECT_URI:-http://localhost:${BUOY_RETRIEVER_ASSET_MANAGER_PORT:-9797}/loggedout}
+      TWOWOLVES_APPS_API_BASE_URL: >-
+        ${BUOY_RETRIEVER_ASSET_MANAGER_APPS_API_BASE_URL-http://localhost:${BUOY_RETRIEVER_ADDB_PGRST_PORT:-3345}}
+      TWOWOLVES_OIDC_SCOPE: "profile email entitlements"
+      TWOWOLVES_APP_VARIANT: "modl"
+    ports:
+      - "${BUOY_RETRIEVER_ASSET_MANAGER_PORT:-9797}:80"
+
 configs:
   erddapper_metadata_nginx_server:
     content: |

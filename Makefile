@@ -20,6 +20,10 @@ spotlight:
 erddap:
 	docker compose up --build erddapper erddap erddapper-metadata
 
+# Start asset-manager services: asset-docs-db, asset-docs-postgrest, and asset-manager
+asset-manager:
+	docker compose up --build asset-docs-db asset-docs-postgrest asset-manager
+
 # Stop and remove all containers
 down:
 	docker compose -f docker-compose.yaml down --remove-orphans
