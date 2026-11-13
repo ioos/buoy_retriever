@@ -1,6 +1,4 @@
 from datetime import date, datetime
-from textwrap import dedent
-from typing import Annotated
 
 import boto3
 import dagster as dg
@@ -9,97 +7,29 @@ import sentry_sdk
 import xarray as xr
 from dagster_aws.s3.sensor import get_objects
 from parse import parse
-from pydantic import BaseModel, Field
+from s3_timeseries import PIPELINE_SLUG, S3TimeseriesConfig, S3TimeseriesDataset
 
 from common import assets, config, io
 from common.backend_api import BackendAPIClient
-from common.config import s3_source
-from common.pipeline.shared_pipeline import BaseTimeseriesConfig
-from common.readers.pandas_csv import PandasCSVReader
 from common.resource.s3fs_resource import S3Credentials, S3FSResource
 from common.sentry import SentryConfig
 
-sentry = SentryConfig(pipeline_name="s3_timeseries")
-
-
-class DayGlob(BaseModel):
-    """Configure glob patterns for daily files in S3."""
-
-    day_pattern: Annotated[
-        str | None,
-        Field(
-            description=dedent("""
-                Glob pattern for daily files.
-                The `partition_date` is available for formatting
-                """),
-            examples=[
-                "EW01_ADCP_{partition_date:%Y%m%d}_*.txt",
-                "EW01_wave_ioos_{partition_date:%Y%m%d}_*.txt",
-            ],
-        ),
-    ] = None
-
-
-class S3TimeseriesConfig(
-    BaseTimeseriesConfig,
-    s3_source.S3SourceMixin,
-):
-    """Configuration for S3 Timeseries Dataset."""
-
-    reader: PandasCSVReader
-
-    source_time_var: str = "datetime"
-
-    file_pattern: Annotated[DayGlob, Field(description="Source file name pattern")]
-
-
-class S3TimeseriesDataset(config.DatasetBase):
-    """S3 Timeseries Dataset."""
-
-    config: Annotated[
-        S3TimeseriesConfig,
-        Field(description="The configuration for the dataset."),
-    ]
-
-    def daily_partition_path(self):
-        """Path to daily partitions."""
-        return (
-            self.safe_slug
-            + "/daily/{partition_key_dt:%Y}/{partition_key_dt:%m}/{partition_key_dt:%Y-%m-%d}.csv"
-        )
-
-    def monthly_partition_path(self):
-        """Path to monthly partitions."""
-
-        return (
-            self.safe_slug
-            # + "/monthly/{partition_key_dt:%Y}/"
-            + "/"
-            + self.slug
-            + "_{partition_key_dt:%Y-%m}.nc"
-        )
+sentry = SentryConfig(pipeline_name=PIPELINE_SLUG)
 
 
 def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C901
     """Definitions for a single S3 Timeseries dataset."""
     common_asset_kwargs = {
-        "key_prefix": ["s3_timeseries", dataset.safe_slug],
+        "key_prefix": dataset.key_prefix,
         "group_name": dataset.safe_slug,
     }
 
-    daily_partitions = dg.DailyPartitionsDefinition(
-        start_date=dataset.config.start_date.isoformat(),
-        end_offset=1,
-    )
-
-    monthly_partitions = dg.MonthlyPartitionsDefinition(
-        start_date=dataset.config.start_date.strftime("%Y-%m-01"),
-        end_offset=1,
-    )
+    config_asset = dataset.config_external_asset(**common_asset_kwargs)
 
     @dg.asset(
-        partitions_def=daily_partitions,
+        partitions_def=dataset.daily_partitions(),
         metadata={io.DESIRED_PATH: dataset.daily_partition_path()},
+        deps=[config_asset],
         **io.CSV_ASSET_KWARGS,
         **common_asset_kwargs,
     )
@@ -163,13 +93,16 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
                 metadata={io.ALLOW_MISSING_PARTITIONS: True},
             ),
         },
-        partitions_def=monthly_partitions,
+        partitions_def=dataset.monthly_partitions(),
         metadata={
             io.DESIRED_PATH: dataset.monthly_partition_path(),
             # io.S3_DESIRED_PATH: config.s3_path(),
             # io.S3_PUBLIC: True,
         },
-        automation_condition=assets.auto_condition_eager_allow_missing(),
+        deps=[config_asset],
+        automation_condition=assets.auto_condition_eager_with_upstream_data(
+            dg.AssetSelection.assets(daily_df),
+        ),
         **io.NETCDF_ASSET_KWARGS,
         **common_asset_kwargs,
     )
@@ -223,7 +156,7 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
                 return dg.SkipReason("No new files found in S3.")
 
             existing_partitions = set()
-            known_partitions = set(daily_partitions.get_partition_keys())
+            known_partitions = set(dataset.daily_partitions().get_partition_keys())
             for run in context.instance.get_runs(
                 filters=dg.RunsFilter(
                     job_name=daily_job.name,
@@ -271,7 +204,7 @@ def defs_for_dataset(dataset: S3TimeseriesDataset) -> dg.Definitions:  # noqa: C
             latest_key_dt = max(key.get("LastModified") for key in new_s3_keys)
             context.update_cursor(latest_key_dt.isoformat())
 
-    dataset_assets = [daily_df, monthly_ds]
+    dataset_assets = [config_asset, daily_df, monthly_ds]
 
     return dg.Definitions(
         assets=dataset_assets,
@@ -293,7 +226,7 @@ def build_defs() -> dg.Definitions:
         name="Build S3 Timeseries Pipeline Definitions",
     ):
         pipeline = config.PipelineConfig(
-            slug="s3_timeseries",
+            slug=PIPELINE_SLUG,
             name="S3 Timeseries",
             description="Fetch time series data from CSV files in S3",
             dataset_config=S3TimeseriesConfig,

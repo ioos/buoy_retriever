@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,8 @@ def test_dataset():
     dataset = DatasetTest(
         slug="test-dataset",
         config=DatasetTestConfig(test_field="test"),
+        created="2026-11-09T00:00:00.000Z",
+        edited="2026-11-09T00:00:00.000Z",
     )
     assert dataset.slug == "test-dataset"
     assert dataset.safe_slug == "test_dataset"
@@ -49,6 +52,8 @@ def test_dataset():
         "slug": "test-dataset",
         "config": {"test_field": "test"},
         "config_state": ConfigState.DRAFT,
+        "created": datetime.fromisoformat("2026-11-09T00:00:00.000Z"),
+        "edited": datetime.fromisoformat("2026-11-09T00:00:00.000Z"),
     }
 
 

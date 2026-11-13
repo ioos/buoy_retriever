@@ -33,6 +33,7 @@ parse = ">=1.20.2,<2"
 dagster-k8s = ">=1!0.27.11,<1!0.28"
 dagster-postgres = ">=1!0.27.11,<1!0.28"
 dagster-aws = ">=1!0.27.11,<1!0.28"
+dagster-graphql = "*"
 
 [tool.pixi.feature.dev.dependencies]
 pytest = "*"

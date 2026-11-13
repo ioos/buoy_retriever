@@ -7,6 +7,6 @@ def get_asset_by_name(defs, name: str) -> dg.AssetsDefinition:
     Uses the function name, not the full asset key/prefix.
     """
     for asset in defs.assets:
-        if asset.get_asset_spec().key.path[-1] == name:
+        if asset.key.path[-1] == name:
             return asset
     raise KeyError(f"Asset with name {name} not found")

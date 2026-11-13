@@ -155,6 +155,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  s3_timeseries_subscriber:
+    extends:
+      service: s3_timeseries
+    command: pixi run python subscriber.py
   aveva:
     build:
       context: .
@@ -194,6 +199,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  hohonu_subscriber:
+    extends:
+      service: hohonu
+    command: pixi run python subscriber.py
 
   erddapper:
     build: https://github.com/axiom-data-science/erddapper.git#v0.1.0

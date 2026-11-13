@@ -81,6 +81,13 @@ services:
       - ./docker-data/secret.e2e.env
       - ./docker-data/s3_pipeline.env
 
+  s3_timeseries_subscriber:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/dagster.env
+      - ./docker-data/secret.e2e.env
+      - ./docker-data/s3_pipeline.env
+
   hohonu:
     env_file: !override
       - ./docker-data/common.env
@@ -94,3 +101,9 @@ services:
       # tests/e2e/conftest.py points this at a per-run temporary directory
       # so output from one run can never satisfy another run's assertions
       - ${BUOY_RETRIEVER_E2E_SHARED_FS:-./docker-data/shared-fs-e2e}:/mnt/efs/
+
+  hohonu_subscriber:
+    env_file: !override
+      - ./docker-data/common.env
+      - ./docker-data/dagster.env
+      - ./docker-data/secret.e2e.env
