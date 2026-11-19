@@ -238,6 +238,8 @@ services:
       - ./docker-data/erddap-data:/erddapData
       - ./docker-data/erddapper-datasets:/mnt/datasets:ro
     environment:
+      #java4shell mitigation until an upgraded ERDDAP image is available
+      JAVA_OPTS: "-XX:-UseBASE64Intrinsics"
       ERDDAP_flagKeyKey: "${BUOY_RETRIEVER_ERDDAP_FLAG_KEY_KEY:-set-me-to-something-secure}"
       ERDDAP_allowedHosts: "${BUOY_RETRIEVER_ERDDAP_allowedHosts:-}"
       ERDDAP_SYMLINK_DATASETS_XML: "/mnt/datasets/datasets.xml"
