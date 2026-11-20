@@ -3,6 +3,8 @@ environments:
   default:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -627,6 +629,8 @@ environments:
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
+    options:
+      pypi-prerelease-mode: if-necessary-or-explicit
     packages:
       linux-64:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -799,8 +803,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.3-pyhc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.1.0-pyhcf101f3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-datadir-1.8.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-env-1.6.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-recording-0.13.4-pyhe01879c_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-regressions-2.11.0-pyhc455866_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.13.14-h6add32d_100_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dotenv-1.2.2-pyhcf101f3_0.conda
@@ -1031,8 +1037,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.3-pyhc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.1.0-pyhcf101f3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-datadir-1.8.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-env-1.6.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-recording-0.13.4-pyhe01879c_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-regressions-2.11.0-pyhc455866_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/python-3.13.14-h6185564_100_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dotenv-1.2.2-pyhcf101f3_0.conda
@@ -1257,8 +1265,10 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-9.0.3-pyhc364b38_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-cov-7.1.0-pyhcf101f3_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-datadir-1.8.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-env-1.6.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-recording-0.13.4-pyhe01879c_1.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-regressions-2.11.0-pyhc455866_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/python-3.13.14-h448ec07_100_cp313.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dateutil-2.9.0.post0-pyhe01879c_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/python-dotenv-1.2.2-pyhcf101f3_0.conda
@@ -6736,6 +6746,16 @@ packages:
   license_family: MIT
   size: 29559
   timestamp: 1774139250481
+- conda: https://conda.anaconda.org/conda-forge/noarch/pytest-datadir-1.8.0-pyhd8ed1ab_0.conda
+  sha256: 9bb02764223157d4b58f7b193f8cdaf82f36a1ade1cd7df611e09e824ece43d8
+  md5: e46da0323c9a50ef1b53c20d33e243a0
+  depends:
+  - pytest >=7.0
+  - python >=3.9
+  license: MIT
+  license_family: MIT
+  size: 12519
+  timestamp: 1753915123443
 - conda: https://conda.anaconda.org/conda-forge/noarch/pytest-env-1.6.0-pyhd8ed1ab_0.conda
   sha256: d288b55b224a1d6a7eca5ca0ac0e026169ffa6458e64dcb990f62f99e37b8010
   md5: 27f9775b96f64454633682cc6a0b0768
@@ -6761,6 +6781,18 @@ packages:
   license_family: MIT
   size: 20398
   timestamp: 1756036224668
+- conda: https://conda.anaconda.org/conda-forge/noarch/pytest-regressions-2.11.0-pyhc455866_0.conda
+  sha256: ba4413898fc01903ef1291a18842689345364b2d79eaa315851b829754d38818
+  md5: b73569e55629580f6d277fe57cc3c9e3
+  depends:
+  - pytest >=6.2.0
+  - pytest-datadir >=1.7.0
+  - python >=3.10
+  - pyyaml
+  license: MIT
+  license_family: MIT
+  size: 78330
+  timestamp: 1779792061225
 - conda: https://conda.anaconda.org/conda-forge/linux-64/python-3.13.13-h6add32d_100_cp313.conda
   build_number: 100
   sha256: 7f77eb57648f545c1f58e10035d0d9d66b0a0efb7c4b58d3ed89ec7269afdde1
